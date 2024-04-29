@@ -1,5 +1,8 @@
 from django.db.models import *
 from django.contrib.auth.models import User
+from rest_framework.fields import ListField
+
+
 # from django.utils import timezone
 
 
@@ -143,7 +146,8 @@ class Combination(Model):
 class Record(Model):
     id = AutoField(primary_key=True)
     user_id = ForeignKey(User, verbose_name='User id', null=False, on_delete=CASCADE)
-    ingr_list = TextField('List', null=False, unique=False)
+    ingr_list = TextField('Ingredient list', null=False, unique=False)
+    conc_list = TextField('Concentration list', null=True, unique=False)
     brand_name = TextField('Brand', null=True)
     product_name = TextField('Product', null=True)
     favorite = BooleanField('Favorite', null=False, default=False)
@@ -154,4 +158,17 @@ class Record(Model):
 
     def __str__(self):
         return str({'user id': self.user_id,
-                    'ingredient list': self.ingr_list})
+                    'ingredient list': self.ingr_list,
+                    'concentration list': self.conc_list})
+
+class TempRecord(Model):
+    id = AutoField(primary_key=True)
+    ingr_list = TextField('Ingredient list', null=False, unique=False)
+    conc_list = TextField('Concentration list', null=True, unique=False)
+
+    class Meta:
+        db_table = 'temp_records'
+
+    def __str__(self):
+        return str({'ingredient list': self.ingr_list,
+                    'concentration list': self.conc_list})

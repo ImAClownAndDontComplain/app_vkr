@@ -75,7 +75,7 @@ def get_ingredient_by_id(id: int) -> Optional[Ingredient]:
     return Ingredient.objects.filter(id=id).first()
 
 def get_ingredient_by_name(name: str) -> Optional[Ingredient]:
-    return Ingredient.objects.filter(ingr_name=name).first()
+    return Ingredient.objects.filter(ingredient=name).first()
 
 def get_all_ingredients() -> Ingredient:
     return Ingredient.objects.all()
@@ -166,7 +166,9 @@ def get_features_by_inci(inci: Inci) -> List[Feature]:
     inci_feature = InciFeature.objects.filter(inci_id=inci).all()
     features = []
     for feature in inci_feature:
-        features.append(get_feature_by_id(feature.feature_id))
+        features.append(feature.feature_id)
+        # feature_id = Feature.objects.get(id=feature.feature_id)
+        # features.append(feature_id)
     return features
 
 def get_features_by_inci_name(name: str) -> Feature:
@@ -210,24 +212,38 @@ def get_user_by_id(id: int) -> Optional[User]:
 def get_record_by_id(id: int) -> Optional[Record]:
     return Record.objects.filter(id=id).first()
 
+def get_temp_record_by_id(id: int) -> Optional[Record]:
+    return TempRecord.objects.filter(id=id).first()
+
 def get_all_records_by_user_id(id: int) -> Record:
     return Record.objects.filter(user_id=id).all()
 
 def get_favorites_by_user_id(id: int) -> Record:
     return Record.objects.filter(user_id=id, favorite=True).all()
 
-def add_record(id: int, ingr_list: str, date_time: datetime) -> None:
+# def add_record(id: int, ingr_list: str, date_time: datetime) -> None:
+#     user = get_user_by_id(id)
+#     record = Record.objects.create(User=user, ingr_list=ingr_list, datetime=date_time)
+#     record.save()
+#     return
+
+def add_record(id: int, ingr_list: str, conc_list: str, date_time: datetime) -> None:
     user = get_user_by_id(id)
-    record = Record.objects.create(User=user, ingr_list=ingr_list, datetime=date_time)
+    record = Record.objects.create(User=user, ingr_list=ingr_list, conc_list=conc_list, datetime=date_time)
     record.save()
     return
 
-def add_record_now(id: int, ingr_list: str) -> None:
+def add_record_now(id: int, ingr_list: str, conc_list: str) -> List[int]:
     user = get_user_by_id(id)
     date_time = datetime.now()
-    record = Record.objects.create(user_id=user, ingr_list=ingr_list, datetime=date_time)
+    record = Record.objects.create(user_id=user, ingr_list=ingr_list, conc_list=conc_list, datetime=date_time)
     record.save()
-    return
+    return [record.id, id]
+
+def add_temp_record(ingr_list: str, conc_list: str) -> int:
+    temp_record = TempRecord.objects.create(ingr_list=ingr_list, conc_list=conc_list)
+    temp_record.save()
+    return temp_record.id
 
 def add_record_to_favorites(id: int) -> None:
     record = get_record_by_id(id)

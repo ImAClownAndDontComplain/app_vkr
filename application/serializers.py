@@ -7,22 +7,25 @@ COMBINATION = [("Yes", "Yes"),
                ("Carefully", "Carefully"),
                ("No", "No")]
 
-INTENSITY = [("Strong", "Strong"),
-             ("Medium", "Medium"),
-             ("Weak", "Weak")]
+# INTENSITY = [("Strong", "Strong"),
+#              ("Medium", "Medium"),
+#              ("Weak", "Weak")]
 
 class IngrSerializer(serializers.Serializer):
     ingr_name = serializers.CharField(max_length=100, required=True)
-    conc = serializers.FloatField(required=False)
+    concentration = serializers.CharField(max_length=10, required=False)
 
 class RecomSerializer(serializers.Serializer):
     recom_text = serializers.CharField(max_length=200, required=True)
 
 class EffectSerializer(serializers.Serializer):
-    # ingr_name = serializers.CharField(max_length=100, required=True)
     effect = serializers.CharField(max_length=200, required=True)
-    intensity = serializers.ChoiceField(choices=INTENSITY, required=True)
-    ingr = ListField(child=serializers.CharField(max_length=100))
+    ingrs = ListField(child=serializers.CharField(max_length=100))
+
+class EffectWithIntensitySerializer(serializers.Serializer):
+    intensity = serializers.CharField(max_length=10, required=True)
+    effect_with_ingrs = ListField(child=EffectSerializer())
+
 
 class SideEffectSerializer(serializers.Serializer):
     ingr_name = serializers.CharField(max_length=100, required=True)
@@ -58,9 +61,9 @@ class ToAnalyzeSerializer(serializers.Serializer):
     ingrs = ListField(child=IngrSerializer())
 
 class AnalyzedSerializer(serializers.Serializer):
-    effects = serializers.ListField(child=EffectSerializer())
-    side_effects = serializers.ListField(child=SideEffectSerializer())
-    recoms = serializers.ListField(child=RecomSerializer())
-    ingrs = serializers.ListField(child=IngrResSerializerShort())
-    combs = serializers.ListField(child=CombSerializer())
+    effects = serializers.ListField(child=EffectWithIntensitySerializer())
+    # side_effects = serializers.ListField(child=SideEffectSerializer())
+    # recoms = serializers.ListField(child=RecomSerializer())
+    # ingrs = serializers.ListField(child=IngrResSerializerShort())
+    # combs = serializers.ListField(child=CombSerializer())
     data = ProductDataSerializer()
