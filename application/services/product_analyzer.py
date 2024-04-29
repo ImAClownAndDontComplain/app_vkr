@@ -209,8 +209,50 @@ class ProductAnalyzer:
 
     def get_max_concentration(self, inci_list: List[Inci]) -> str:
         inci_indices = [self.incis.index(inci) for inci in inci_list]
-        max_index = max(inci_indices)
-        return self.concs[max_index]
+        min_index = min(inci_indices)
+        return self.concs[min_index]
+
+    def check_same_ingredients(self, effect_with_intensity_list: dict) -> dict:
+        intensity = effect_with_intensity_list["intensity"]
+        effect_list = effect_with_intensity_list['effect_with_ingrs']
+        only_effects_list = []
+        only_ingrs_list = []
+        for effect in effect_list:
+            only_effects_list.append(effect['effect'])
+            only_ingrs_list.append(effect['ingrs'])
+        # print(only_effects_list)
+        # print(only_ingrs_list)
+        changed = False
+        n = len(only_effects_list) - 1
+        for i in range(0, n):
+            for j in range(0, n):
+                if i != j:
+                    if only_ingrs_list[i] == only_ingrs_list[j]:
+                        changed = True
+                        # print('AAA')
+                        only_effects_list[i] += ', ' + only_effects_list[j]
+                        only_effects_list.pop(j)
+                        only_ingrs_list.pop(j)
+                        n -= 1
+        if not changed:
+            return effect_with_intensity_list
+
+        n += 1
+        new_effects_list = []
+        for i in range(0, n):
+            data = {
+                'effect': only_effects_list[i],
+                'ingrs': only_ingrs_list[i]
+            }
+            # print(data)
+            new_effects_list.append(data)
+        data = {
+            'intensity': intensity,
+            'effect_with_ingrs': new_effects_list
+        }
+        # print(data)
+        # effect_with_intensity_list = data
+        return data
 
     def make_effects_serializers(self) -> None:
         self.get_effects()
@@ -231,18 +273,16 @@ class ProductAnalyzer:
             effect_serializer = EffectSerializer(data=data)
             if not effect_serializer.is_valid():
                 return None
-            # print(effect_serializer.data)
+
             effect_ingrs.append(effect_serializer.data)
             max_concs.append(max_conc)
 
-        # print(effect_ingrs)
         weak_effects = []
         medium_effects = []
         strong_effects = []
         for i in range(0, len(effect_ingrs)):
             effect = effect_ingrs[i]
-            # print(effect)
-            intensity = ''
+            # intensity = ''
             if max_concs[i] == CONCENTRATIONS[0]:
                 strong_effects.append(effect)
                 # intensity = 'Strong'
@@ -253,19 +293,21 @@ class ProductAnalyzer:
                 weak_effects.append(effect)
 
         data_strong = {
-            'intensity': 'Strong',
+            'intensity': 'Сильное действие:',
             'effect_with_ingrs': strong_effects
         }
+        data_strong = self.check_same_ingredients(data_strong)
         data_medium = {
-            'intensity': 'Medium',
+            'intensity': 'Среднее по силе действие:',
             'effect_with_ingrs': medium_effects
         }
+        data_medium = self.check_same_ingredients(data_medium)
         data_weak = {
-            'intensity': 'Weak',
+            'intensity': 'Слабое действие:',
             'effect_with_ingrs': weak_effects
         }
+        data_weak = self.check_same_ingredients(data_weak)
         self.effects_serializers = [data_strong, data_medium, data_weak]
-
             #     intensity = 'Weak'
             # # print(intensity)
             # data = {
@@ -286,12 +328,10 @@ class ProductAnalyzer:
         self.get_data()
         self.get_common_info()
         self.make_effects_serializers()
-        print(self.effects_serializers)
         data = {
             'data': self.commons_serializer.data,
             'effects': self.effects_serializers
         }
-        # print(data)
         return AnalyzedSerializer(data)
 
 

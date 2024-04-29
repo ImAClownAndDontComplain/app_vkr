@@ -23,7 +23,7 @@ class EffectSerializer(serializers.Serializer):
     ingrs = ListField(child=serializers.CharField(max_length=100))
 
 class EffectWithIntensitySerializer(serializers.Serializer):
-    intensity = serializers.CharField(max_length=10, required=True)
+    intensity = serializers.CharField(max_length=100, required=True)
     effect_with_ingrs = ListField(child=EffectSerializer())
 
 
