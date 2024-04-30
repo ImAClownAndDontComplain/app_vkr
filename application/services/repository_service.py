@@ -146,6 +146,9 @@ def get_all_combs_by_inci_id(id: int) -> Combination:
     inci = get_inci_by_id(id)
     return Combination.objects.filter(inci_id_1=inci)
 
+def get_all_combs_by_inci(inci: Inci) -> List[Combination]:
+    return list(Combination.objects.filter(inci_id_1=inci).all())
+
 def get_all_combs_by_inci_name(name: str) -> Combination:
     inci = get_inci_by_name(name)
     return Combination.objects.filter(inci_id_1=inci)
@@ -197,6 +200,13 @@ def get_all_recoms() -> Recommendation:
 def get_all_recoms_by_inci_id(id: int) -> Recommendation:
     inci = get_inci_by_id(id)
     return InciRecom.objects.filter(inci_id=inci).all()
+
+def get_all_recoms_by_inci(inci: Inci) -> List[Recommendation]:
+    inci_recoms = InciRecom.objects.filter(inci_id=inci).all()
+    res = []
+    for inci_recom in inci_recoms:
+        res.append(inci_recom.recom_id)
+    return res
 
 def get_all_recoms_by_inci_name(name: str) -> Recommendation:
     inci = get_inci_by_name(name)

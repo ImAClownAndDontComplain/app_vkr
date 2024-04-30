@@ -28,8 +28,8 @@ class EffectWithIntensitySerializer(serializers.Serializer):
 
 
 class SideEffectSerializer(serializers.Serializer):
-    ingr_name = serializers.CharField(max_length=100, required=True)
     side_effect = serializers.CharField(max_length=200, required=True)
+    ingrs = ListField(child=serializers.CharField(max_length=100))
 
 
 class IngrResSerializerShort(serializers.Serializer):
@@ -44,12 +44,13 @@ class IngrResSerializerLong(serializers.Serializer):
     ingr_name = serializers.CharField(max_length=100, required=True)
     # ... потом доделаю
 
-
 class CombSerializer(serializers.Serializer):
     ingr_name = serializers.CharField(max_length=100, required=True)
-    inci_name_2 = serializers.CharField(max_length=100, required=False)
-    comb_type = serializers.ChoiceField(choices=COMBINATION, required=True)
     description = serializers.CharField(max_length=500, required=True)
+
+class CombWithTypeSerializer(serializers.Serializer):
+    comb_type = serializers.CharField(max_length=100, required=True)
+    combination = serializers.ListField(child=CombSerializer())
 
 class ProductDataSerializer(serializers.Serializer):
     vegan = serializers.CharField(max_length=300, required=True)
@@ -58,12 +59,12 @@ class ProductDataSerializer(serializers.Serializer):
     hypoallergenic = serializers.CharField(max_length=300, required=True)
 
 class ToAnalyzeSerializer(serializers.Serializer):
-    ingrs = ListField(child=IngrSerializer())
+    ingrs = serializers.ListField(child=IngrSerializer())
 
 class AnalyzedSerializer(serializers.Serializer):
     effects = serializers.ListField(child=EffectWithIntensitySerializer())
-    # side_effects = serializers.ListField(child=SideEffectSerializer())
-    # recoms = serializers.ListField(child=RecomSerializer())
+    side_effects = serializers.ListField(child=SideEffectSerializer())
+    recoms = serializers.ListField(child=RecomSerializer())
     # ingrs = serializers.ListField(child=IngrResSerializerShort())
-    # combs = serializers.ListField(child=CombSerializer())
+    combs = serializers.ListField(child=CombWithTypeSerializer())
     data = ProductDataSerializer()

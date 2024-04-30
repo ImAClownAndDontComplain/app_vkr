@@ -4,6 +4,7 @@ from ..serializers import *
 from .repository_service import *
 
 CONCENTRATIONS = ['High', 'Medium', 'Low']
+COMBINATIONS = ['Yes', 'Carefully', 'No']
 
 # 13 pregnant
 # 5 allergy
@@ -21,18 +22,34 @@ class ProductAnalyzer:
         self.inci_effects_list = []
         self.side_effects_list = []
         self.inci_side_effects_list = []
-        # self.commons_serializer = None
+        self.commons_serializer = None
         self.effects_serializers = []
+        self.side_effects_serializers = []
         self.analyzed_serializer = None
+        self.recoms_serializers = []
+        self.comb_serializers = []
+        self.ingr_serializers = []
         pass
 
-    # ingredients = List[(str, float)]
+    # результат анализа
     analyzed_serializer = AnalyzedSerializer
+    # общие сведения по продукту
     commons_serializer = ProductDataSerializer
-    # ingr_names = []
-    # ingr_types = []
-    # incis = List[Inci]
-    # concs = List[str]
+    # эффекты средства
+    effects_serializers = List[dict]
+    # побочные эффекты средства
+    side_effects_serializers = List[dict]
+    # рекомендации по применению
+    recoms_serializers = List[dict]
+    # рекомендации по комбинированию
+    comb_serializers = List[dict]
+    # информация по компонентам
+    ingr_serializers = List[dict]
+
+
+    # idk
+    # combs_list = List[Combination]
+    # inci_combs_list = List[List[Inci]]
 
     # список эффектов и соответствующих им компонентов
     effects_list = List[Feature]
@@ -42,9 +59,7 @@ class ProductAnalyzer:
     side_effects_list = List[Feature]
     inci_side_effects_list = List[List[Inci]]
 
-    # effects_serializers = List[EffectWithIntensitySerializer]
-
-    # общие концентрации компонентов
+    # концентрации компонентов по умолчанию
     def get_generic_concentrations(self) -> None:
         self.high_conc = self.quantity // 4
         self.medium_conc = self.high_conc + 1 + self.quantity // 3
@@ -56,10 +71,9 @@ class ProductAnalyzer:
             else:
                 self.concs.append(CONCENTRATIONS[2])
 
-    # специфические концентрации (с учетом введенных данных,
-    # сравнение с данными из бд, изменение списка
+    # специфические концентрации (с учетом введенных данных, сравнение с данными из бд, изменение списка
     def get_specific_concentrations(self, inci: Inci, conc: str) -> None:
-        if conc is None or conc == '-1':
+        if conc is None or conc == '0':
             return
 
         conc_var = get_conc_by_inci(inci)
@@ -116,6 +130,7 @@ class ProductAnalyzer:
                 self.incis.append(None)
                 pass
 
+    # проверка дублирования эффектов (если два компонента имеют один эффект, они относятся к одному эффекту)
     def check_effect_duplicating(self, feature: Feature, inci: Inci) -> bool:
         for i in range(0, len(self.effects_list)):
             effect = self.effects_list[i]
@@ -124,6 +139,7 @@ class ProductAnalyzer:
                 return True
         return False
 
+    # проверка дублирования побочек (тот же принцип)
     def check_side_effect_duplicating(self, feature: Feature, inci: Inci) -> bool:
         for i in range(0, len(self.side_effects_list)):
             side_effect = self.side_effects_list[i]
@@ -190,6 +206,7 @@ class ProductAnalyzer:
         if not self.commons_serializer.is_valid():
             return None
 
+    # получение списка всех эффектов и побочек без учета концентраций
     def get_effects(self) -> None:
         for inci in self.incis:
             features = get_features_by_inci(inci)
@@ -207,55 +224,131 @@ class ProductAnalyzer:
                             self.inci_side_effects_list.append([inci])
         pass
 
+    # получение максимальной концентрации компонента по отношению к эффекту
     def get_max_concentration(self, inci_list: List[Inci]) -> str:
         inci_indices = [self.incis.index(inci) for inci in inci_list]
         min_index = min(inci_indices)
         return self.concs[min_index]
 
-    def check_same_ingredients(self, effect_with_intensity_list: dict) -> dict:
-        intensity = effect_with_intensity_list["intensity"]
+    #
+    def filter_combs_by_min_value(self, combinations: List[dict]) -> List[dict]:
+        n = len(combinations)
+        for i in range(0, n):
+            for j in range(0, n):
+                if i != j:
+                    if combinations[i]['ingr_name'] == combinations[j]:
+                        comb_type_i = COMBINATIONS.index(combinations[i]['comb_type'])
+                        comb_type_j = COMBINATIONS.index(combinations[j]['comb_type'])
+                        if comb_type_i == comb_type_j:
+                            combinations.pop(j)
+                        elif comb_type_i > comb_type_j:
+                            combinations.pop(j)
+                        else:
+                            combinations.pop(i)
+                        n -= 1
+        return combinations
+
+    #
+    def make_comb_serializers(self) -> None:
+        combinations = []
+        for inci in self.incis:
+            combs = get_all_combs_by_inci(inci)
+            if combs is not None:
+                for comb in combs:
+                    data = {
+                        'ingr_name': comb.inci_id_2.inci_name,
+                        'comb_type': comb.comb_type,
+                        'description': comb.combination
+                    }
+                    combinations.append(data)
+        combinations = self.filter_combs_by_min_value(combinations)
+        all_combs = [[], [], []]
+        for comb in combinations:
+            index_comb = COMBINATIONS.index(comb['comb_type'])
+            all_combs[index_comb].append({'ingr_name': comb['ingr_name'], 'description': comb['description']})
+        comb_types = ['Рекомендуется', 'Допустимо с осторожностью', 'Не рекомендуется']
+        self.comb_serializers = [
+            {'comb_type': comb_types[i], 'combination': all_combs[i]} for i in range(0, 3)
+        ]
+
+    # алгоритм для проверки того, обусловлены ли разные эффекты одинаковым набором ингредиентов
+    def check_same_ingredients_algorithm(self, effects_list: List, ingrs_list: List) -> (bool, List, List):
+        changed = False
+        n = len(effects_list) - 1
+        for i in range(0, n):
+            for j in range(0, n):
+                if i != j:
+                    if ingrs_list[i] == ingrs_list[j]:
+                        changed = True
+                        # print('AAA')
+                        effects_list[i] += ', ' + effects_list[j]
+                        effects_list.pop(j)
+                        ingrs_list.pop(j)
+                        n -= 1
+        if not changed:
+            return (False, effects_list, ingrs_list)
+        else:
+            return (True, effects_list, ingrs_list)
+
+    # проверка и конкатенация эффектов
+    def check_same_ingredients_for_effects(self, effect_with_intensity_list: dict) -> dict:
+        intensity = effect_with_intensity_list['intensity']
         effect_list = effect_with_intensity_list['effect_with_ingrs']
         only_effects_list = []
         only_ingrs_list = []
         for effect in effect_list:
             only_effects_list.append(effect['effect'])
             only_ingrs_list.append(effect['ingrs'])
-        # print(only_effects_list)
-        # print(only_ingrs_list)
-        changed = False
-        n = len(only_effects_list) - 1
-        for i in range(0, n):
-            for j in range(0, n):
-                if i != j:
-                    if only_ingrs_list[i] == only_ingrs_list[j]:
-                        changed = True
-                        # print('AAA')
-                        only_effects_list[i] += ', ' + only_effects_list[j]
-                        only_effects_list.pop(j)
-                        only_ingrs_list.pop(j)
-                        n -= 1
-        if not changed:
+        changed = self.check_same_ingredients_algorithm(only_effects_list, only_ingrs_list)
+        if changed[0] is False:
             return effect_with_intensity_list
-
-        n += 1
         new_effects_list = []
+        n = len(changed[1])
+        only_effects_list = changed[1]
+        only_ingrs_list = changed[2]
         for i in range(0, n):
             data = {
                 'effect': only_effects_list[i],
                 'ingrs': only_ingrs_list[i]
             }
-            # print(data)
             new_effects_list.append(data)
         data = {
             'intensity': intensity,
             'effect_with_ingrs': new_effects_list
         }
-        # print(data)
-        # effect_with_intensity_list = data
         return data
 
+    # проверка и конкатенация побочек
+    def check_same_ingredients_for_side_effects(self, side_effect_list: List[dict]) -> List[dict]:
+        only_side_effects_list = []
+        only_ingrs_list = []
+        for side_effect in side_effect_list:
+            only_side_effects_list.append(side_effect['side_effect'])
+            only_ingrs_list.append(side_effect['ingrs'])
+        changed = self.check_same_ingredients_algorithm(only_side_effects_list, only_ingrs_list)
+        if changed[0] is False:
+            return side_effect_list
+        n = len(changed[1])
+        only_side_effects_list = changed[1]
+        only_ingrs_list = changed[2]
+        new_side_effects_list = []
+        for i in range(0, n):
+            data = {
+                'side_effect': only_side_effects_list[i],
+                'ingrs': only_ingrs_list[i]
+            }
+            new_side_effects_list.append(data)
+        return new_side_effects_list
+
+    # проверка дублирования рекомендация при добавлении
+    def check_recoms_duplicating(self, recom: Recommendation) -> bool:
+        for recom_dict in self.recoms_serializers:
+            if recom_dict['recom_text'] == recom.recom:
+                return True
+        return False
+
+    # создание списка выходных сериалайзеров эффектов
     def make_effects_serializers(self) -> None:
-        self.get_effects()
         effect_ingrs = []
         max_concs = []
         for i in range(0, len(self.effects_list)):
@@ -270,67 +363,71 @@ class ProductAnalyzer:
                 'effect': effect_text,
                 'ingrs': names_list
             }
-            effect_serializer = EffectSerializer(data=data)
-            if not effect_serializer.is_valid():
-                return None
-
-            effect_ingrs.append(effect_serializer.data)
+            effect_ingrs.append(data)
             max_concs.append(max_conc)
 
-        weak_effects = []
-        medium_effects = []
-        strong_effects = []
+        all_effects = [[], [], []]
         for i in range(0, len(effect_ingrs)):
             effect = effect_ingrs[i]
-            # intensity = ''
-            if max_concs[i] == CONCENTRATIONS[0]:
-                strong_effects.append(effect)
-                # intensity = 'Strong'
-            elif max_concs[i] == CONCENTRATIONS[1]:
-                medium_effects.append(effect)
-                # intensity = 'Medium'
-            elif max_concs[i] == CONCENTRATIONS[2]:
-                weak_effects.append(effect)
+            index_effect = CONCENTRATIONS.index(max_concs[i])
+            all_effects[index_effect].append(effect)
 
-        data_strong = {
-            'intensity': 'Сильное действие:',
-            'effect_with_ingrs': strong_effects
-        }
-        data_strong = self.check_same_ingredients(data_strong)
-        data_medium = {
-            'intensity': 'Среднее по силе действие:',
-            'effect_with_ingrs': medium_effects
-        }
-        data_medium = self.check_same_ingredients(data_medium)
-        data_weak = {
-            'intensity': 'Слабое действие:',
-            'effect_with_ingrs': weak_effects
-        }
-        data_weak = self.check_same_ingredients(data_weak)
-        self.effects_serializers = [data_strong, data_medium, data_weak]
-            #     intensity = 'Weak'
-            # # print(intensity)
-            # data = {
-            #     'intensity': intensity,
-            #     'effect_with_ingrs': effect
-            # }
-            # # print(data)
-            # # effect_with_intensity = EffectWithIntensitySerializer(data=data)
-            # self.effects_serializers.append(data)
-            # print(self.effects_serializers)
-            # if effect_with_intensity.is_valid():
-            #     print(effect_with_intensity.data)
-            #     self.effects_serializers.append(effect_with_intensity.data)
-            #     print(self.effects_serializers)
+        intensities = ['Сильное действие:', 'Среднее по силе действие:', 'Слабое действие:']
+        all_effects_data = [{'intensity': intensities[i], 'effect_with_ingrs': all_effects[i]} for i in range(0, 3)]
+        for i in range(0, len(all_effects_data)):
+            all_effects_data[i] = self.check_same_ingredients_for_effects(all_effects_data[i])
+        self.effects_serializers = all_effects_data
+
+    # создание списка выходных сериалайзеров побочек
+    def make_side_effects_serializers(self) -> None:
+        for i in range(0, len(self.side_effects_list)):
+            side_effect = self.side_effects_list[i]
+            inci_list = self.inci_side_effects_list[i]
+            side_effect_text = side_effect.effect
+            names_list = []
+            for inci in inci_list:
+                names_list.append(self.ingr_names[self.incis.index(inci)])
+            data = {
+                'side_effect': side_effect_text,
+                'ingrs': names_list
+            }
+            side_effect_serializer = SideEffectSerializer(data=data)
+            if not side_effect_serializer.is_valid():
+                return None
+
+            self.side_effects_serializers.append(side_effect_serializer.data)
+        self.side_effects_serializers = self.check_same_ingredients_for_side_effects(self.side_effects_serializers)
+
+    # создание списка выходных сериалайзеров рекомендаций
+    def make_recoms_serializers(self) -> None:
+        for inci in self.incis:
+            recoms = get_all_recoms_by_inci(inci)
+            if recoms is not None:
+                for recom in recoms:
+                    add_new_recom = self.check_recoms_duplicating(recom)
+                    if add_new_recom:
+                        pass
+                    else:
+                        data = {
+                            'recom_text': recom.recom,
+                        }
+                        self.recoms_serializers.append(data)
 
 
     def get_result(self) -> AnalyzedSerializer:
         self.get_data()
         self.get_common_info()
+        self.get_effects()
         self.make_effects_serializers()
+        self.make_side_effects_serializers()
+        self.make_recoms_serializers()
+        self.make_comb_serializers()
         data = {
             'data': self.commons_serializer.data,
-            'effects': self.effects_serializers
+            'effects': self.effects_serializers,
+            'side_effects': self.side_effects_serializers,
+            'recoms': self.recoms_serializers,
+            'combs': self.comb_serializers,
         }
         return AnalyzedSerializer(data)
 

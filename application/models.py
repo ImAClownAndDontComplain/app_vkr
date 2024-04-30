@@ -131,7 +131,7 @@ class Combination(Model):
     id = AutoField(primary_key=True)
     inci_id_1 = ForeignKey('Inci', verbose_name='Inci 1', related_name='inci_1', null=False, on_delete=CASCADE)
     inci_id_2 = ForeignKey('Inci', verbose_name='Inci 2', related_name='inci_2', null=False, on_delete=CASCADE)
-    comb_type = CharField(max_length=10, choices=COMBINATION, null=False)
+    comb_type = CharField(max_length=10, null=False)
     combination = TextField('Combination', null=False, unique=True)
 
     class Meta:
