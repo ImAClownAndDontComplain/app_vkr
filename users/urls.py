@@ -33,6 +33,7 @@ from . import views
 from django.urls import path, re_path
 from dj_rest_auth.registration.views import RegisterView, VerifyEmailView, ConfirmEmailView
 from dj_rest_auth.views import LoginView, LogoutView
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView, TokenVerifyView
 
 urlpatterns = [
     # path('account-confirm-email/<str:key>/', ConfirmEmailView.as_view()),
@@ -42,6 +43,9 @@ urlpatterns = [
 
     path('verify-email/',
          VerifyEmailView.as_view(), name='rest_verify_email'),
+    path('token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('token/verify/', TokenVerifyView.as_view(), name='token_verify'),
     # path('change-password/', views.ChangePassword.as_view(), name='change_password'),
     # path('password-change/done/', PasswordChangeDoneView.as_view(), name='password_change_done'),
     # path(r'^account-confirm-email/', VerifyEmailView.as_view(),

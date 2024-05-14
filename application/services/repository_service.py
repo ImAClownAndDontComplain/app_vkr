@@ -77,8 +77,18 @@ def get_ingredient_by_id(id: int) -> Optional[Ingredient]:
 def get_ingredient_by_name(name: str) -> Optional[Ingredient]:
     return Ingredient.objects.filter(ingredient=name).first()
 
-def get_all_ingredients() -> Ingredient:
+def get_all_ingredients() -> QuerySet[Ingredient]:
     return Ingredient.objects.all()
+
+def get_all_ingredient_names() -> List[str]:
+    ingredients = list(get_all_ingredients())
+    # print(ingredients)
+    res = []
+    for ingredient in ingredients:
+        # print(ingredient.ingredient)
+        res.append(ingredient.ingredient)
+    # return [ingredient.ingredient for ingredient in ingredients]
+    return res
 
 def get_all_ingredients_by_inci_id(id: int) -> Ingredient:
     return Ingredient.objects.filter(inci_id=id).all()
@@ -101,6 +111,11 @@ def get_types_by_inci(inci: Inci) -> List[Type]:
         type_inci = inci.type_id
         res.append(type_inci)
     return res
+
+def get_type_options_by_inci(inci: Inci) -> List[InciType]:
+    inci_types = InciType.objects.filter(inci_id=inci).all()
+    return list(inci_types)
+
 
 def get_types_by_inci_id(id: int) -> List[Type]:
     inci_id = get_inci_by_id(id)
@@ -170,8 +185,14 @@ def get_features_by_inci(inci: Inci) -> List[Feature]:
     features = []
     for feature in inci_feature:
         features.append(feature.feature_id)
-        # feature_id = Feature.objects.get(id=feature.feature_id)
-        # features.append(feature_id)
+    return features
+
+def get_positive_features_by_inci(inci: Inci) -> List[Feature]:
+    inci_feature = InciFeature.objects.filter(inci_id=inci).all()
+    features = []
+    for feature in inci_feature:
+        if feature.feature_id.benefit:
+            features.append(feature.feature_id)
     return features
 
 def get_features_by_inci_name(name: str) -> Feature:
@@ -243,12 +264,18 @@ def add_record(id: int, ingr_list: str, conc_list: str, date_time: datetime) -> 
     record.save()
     return
 
-def add_record_now(id: int, ingr_list: str, conc_list: str) -> List[int]:
-    user = get_user_by_id(id)
+# def add_record_now(id: int, ingr_list: str, conc_list: str) -> int:
+#     user = get_user_by_id(id)
+#     date_time = datetime.now()
+#     record = Record.objects.create(user_id=user, ingr_list=ingr_list, conc_list=conc_list, datetime=date_time)
+#     record.save()
+#     return record.id
+
+def add_record_now(user: User, ingr_list: str, conc_list: str) -> int:
     date_time = datetime.now()
     record = Record.objects.create(user_id=user, ingr_list=ingr_list, conc_list=conc_list, datetime=date_time)
     record.save()
-    return [record.id, id]
+    return record.id
 
 def add_temp_record(ingr_list: str, conc_list: str) -> int:
     temp_record = TempRecord.objects.create(ingr_list=ingr_list, conc_list=conc_list)

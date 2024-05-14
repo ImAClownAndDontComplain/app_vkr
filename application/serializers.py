@@ -11,9 +11,17 @@ COMBINATION = [("Yes", "Yes"),
 #              ("Medium", "Medium"),
 #              ("Weak", "Weak")]
 
+class AllNamesSerializer(serializers.Serializer):
+    ingr_names = ListField(child=serializers.CharField(max_length=100, required=True))
+
+
 class IngrSerializer(serializers.Serializer):
     ingr_name = serializers.CharField(max_length=100, required=True)
     concentration = serializers.CharField(max_length=10, required=False)
+
+class ToAnalyzeSerializer(serializers.Serializer):
+    ingrs = serializers.ListField(child=IngrSerializer())
+
 
 class RecomSerializer(serializers.Serializer):
     recom_text = serializers.CharField(max_length=200, required=True)
@@ -35,8 +43,8 @@ class SideEffectSerializer(serializers.Serializer):
 class IngrResSerializerShort(serializers.Serializer):
     ingr_name = serializers.CharField(max_length=100, required=True)
     inci_name = serializers.CharField(max_length=100, required=False)
-    type_name = serializers.CharField(max_length=100, required=True)
-    description = serializers.CharField(max_length=200, required=True)
+    description = serializers.CharField(max_length=200, required=False)
+    type_name = serializers.CharField(max_length=100, required=False)
     effect = serializers.CharField(max_length=200, required=False)
 
 
@@ -58,13 +66,12 @@ class ProductDataSerializer(serializers.Serializer):
     pregnant = serializers.CharField(max_length=300, required=True)
     hypoallergenic = serializers.CharField(max_length=300, required=True)
 
-class ToAnalyzeSerializer(serializers.Serializer):
-    ingrs = serializers.ListField(child=IngrSerializer())
+
 
 class AnalyzedSerializer(serializers.Serializer):
+    data = ProductDataSerializer()
     effects = serializers.ListField(child=EffectWithIntensitySerializer())
     side_effects = serializers.ListField(child=SideEffectSerializer())
     recoms = serializers.ListField(child=RecomSerializer())
-    # ingrs = serializers.ListField(child=IngrResSerializerShort())
+    ingrs = serializers.ListField(child=IngrResSerializerShort())
     combs = serializers.ListField(child=CombWithTypeSerializer())
-    data = ProductDataSerializer()

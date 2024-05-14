@@ -47,10 +47,6 @@ class ProductAnalyzer:
     ingr_serializers = List[dict]
 
 
-    # idk
-    # combs_list = List[Combination]
-    # inci_combs_list = List[List[Inci]]
-
     # список эффектов и соответствующих им компонентов
     effects_list = List[Feature]
     inci_effects_list = List[List[Inci]]
@@ -73,7 +69,7 @@ class ProductAnalyzer:
 
     # специфические концентрации (с учетом введенных данных, сравнение с данными из бд, изменение списка
     def get_specific_concentrations(self, inci: Inci, conc: str) -> None:
-        if conc is None or conc == '0':
+        if inci is None or conc is None or conc == '0':
             return
 
         conc_var = get_conc_by_inci(inci)
@@ -89,7 +85,7 @@ class ProductAnalyzer:
                     self.concs[i] = CONCENTRATIONS[0]
                     return
 
-        if float(conc) > conc_var[2]:
+        if float(conc) > conc_var[0]:
             if self.concs[inci_index] == CONCENTRATIONS[1]:
                 return
 
@@ -102,7 +98,7 @@ class ProductAnalyzer:
                     self.concs[i] = CONCENTRATIONS[1]
                     return
 
-        if float(conc) <= conc_var[2]:
+        if float(conc) <= conc_var[0]:
             if self.concs[inci_index] == CONCENTRATIONS[2]:
                 return
 
@@ -124,11 +120,8 @@ class ProductAnalyzer:
                 self.incis.append(inci)
                 if ingr_conc is not None:
                     self.get_specific_concentrations(inci, ingr_conc)
-                else:
-                    pass
             else:
                 self.incis.append(None)
-                pass
 
     # проверка дублирования эффектов (если два компонента имеют один эффект, они относятся к одному эффекту)
     def check_effect_duplicating(self, feature: Feature, inci: Inci) -> bool:
@@ -148,27 +141,53 @@ class ProductAnalyzer:
                 return True
         return False
 
+    # проверка дублирования рекомендаций при добавлении
+    def check_recoms_duplicating(self, recom: Recommendation) -> bool:
+        for recom_dict in self.recoms_serializers:
+            if recom_dict['recom_text'] == recom.recom:
+                return True
+        return False
+
+    #
+    def filter_combs_by_min_value(self, combinations: List[dict]) -> List[dict]:
+        n = len(combinations)
+        for i in range(0, n):
+            for j in range(0, n):
+                if i != j:
+                    if combinations[i]['ingr_name'] == combinations[j]:
+                        comb_type_i = COMBINATIONS.index(combinations[i]['comb_type'])
+                        comb_type_j = COMBINATIONS.index(combinations[j]['comb_type'])
+                        if comb_type_i == comb_type_j:
+                            combinations.pop(j)
+                        elif comb_type_i > comb_type_j:
+                            combinations.pop(j)
+                        else:
+                            combinations.pop(i)
+                        n -= 1
+        return combinations
+
     # общие характеристики всего средства
     def get_common_info(self) -> None:
         # vegan, natural, pregnant, hypoal
         commons = [True, True, True, True]
 
         for inci in self.incis:
-            if commons[0] is True and inci.vegan is False:
-                commons[0] = False
+            if inci is not None:
+                if commons[0] is True and inci.vegan is False:
+                    commons[0] = False
 
-            if commons[1] is True and inci.source != 'Натуральное происхождение':
-                commons[1] = False
+                if commons[1] is True and inci.source != 'Натуральное происхождение':
+                    commons[1] = False
 
-            features = get_features_by_inci(inci)
-            if features is not None:
-                for feature in features:
-                    
-                    if commons[2] is True and feature.id == 13:
-                        commons[2] = False
-                        
-                    if commons[3] is True and feature.id == 5:
-                        commons[3] = False
+                features = get_features_by_inci(inci)
+                if features is not None:
+                    for feature in features:
+
+                        if commons[2] is True and feature.id == 13:
+                            commons[2] = False
+
+                        if commons[3] is True and feature.id == 5:
+                            commons[3] = False
         #
         # common_0 = ''
         # common_1 = ''
@@ -209,19 +228,20 @@ class ProductAnalyzer:
     # получение списка всех эффектов и побочек без учета концентраций
     def get_effects(self) -> None:
         for inci in self.incis:
-            features = get_features_by_inci(inci)
-            if features is not None:
-                for feature in features:
-                    if feature.benefit is True:
-                        add_new_effect = self.check_effect_duplicating(feature, inci)
-                        if not add_new_effect:
-                            self.effects_list.append(feature)
-                            self.inci_effects_list.append([inci])
-                    else:
-                        add_new_side_effect = self.check_side_effect_duplicating(feature, inci)
-                        if not add_new_side_effect:
-                            self.side_effects_list.append(feature)
-                            self.inci_side_effects_list.append([inci])
+            if inci is not None:
+                features = get_features_by_inci(inci)
+                if features is not None:
+                    for feature in features:
+                        if feature.benefit is True:
+                            add_new_effect = self.check_effect_duplicating(feature, inci)
+                            if not add_new_effect:
+                                self.effects_list.append(feature)
+                                self.inci_effects_list.append([inci])
+                        else:
+                            add_new_side_effect = self.check_side_effect_duplicating(feature, inci)
+                            if not add_new_side_effect:
+                                self.side_effects_list.append(feature)
+                                self.inci_side_effects_list.append([inci])
         pass
 
     # получение максимальной концентрации компонента по отношению к эффекту
@@ -229,47 +249,6 @@ class ProductAnalyzer:
         inci_indices = [self.incis.index(inci) for inci in inci_list]
         min_index = min(inci_indices)
         return self.concs[min_index]
-
-    #
-    def filter_combs_by_min_value(self, combinations: List[dict]) -> List[dict]:
-        n = len(combinations)
-        for i in range(0, n):
-            for j in range(0, n):
-                if i != j:
-                    if combinations[i]['ingr_name'] == combinations[j]:
-                        comb_type_i = COMBINATIONS.index(combinations[i]['comb_type'])
-                        comb_type_j = COMBINATIONS.index(combinations[j]['comb_type'])
-                        if comb_type_i == comb_type_j:
-                            combinations.pop(j)
-                        elif comb_type_i > comb_type_j:
-                            combinations.pop(j)
-                        else:
-                            combinations.pop(i)
-                        n -= 1
-        return combinations
-
-    #
-    def make_comb_serializers(self) -> None:
-        combinations = []
-        for inci in self.incis:
-            combs = get_all_combs_by_inci(inci)
-            if combs is not None:
-                for comb in combs:
-                    data = {
-                        'ingr_name': comb.inci_id_2.inci_name,
-                        'comb_type': comb.comb_type,
-                        'description': comb.combination
-                    }
-                    combinations.append(data)
-        combinations = self.filter_combs_by_min_value(combinations)
-        all_combs = [[], [], []]
-        for comb in combinations:
-            index_comb = COMBINATIONS.index(comb['comb_type'])
-            all_combs[index_comb].append({'ingr_name': comb['ingr_name'], 'description': comb['description']})
-        comb_types = ['Рекомендуется', 'Допустимо с осторожностью', 'Не рекомендуется']
-        self.comb_serializers = [
-            {'comb_type': comb_types[i], 'combination': all_combs[i]} for i in range(0, 3)
-        ]
 
     # алгоритм для проверки того, обусловлены ли разные эффекты одинаковым набором ингредиентов
     def check_same_ingredients_algorithm(self, effects_list: List, ingrs_list: List) -> (bool, List, List):
@@ -280,7 +259,6 @@ class ProductAnalyzer:
                 if i != j:
                     if ingrs_list[i] == ingrs_list[j]:
                         changed = True
-                        # print('AAA')
                         effects_list[i] += ', ' + effects_list[j]
                         effects_list.pop(j)
                         ingrs_list.pop(j)
@@ -340,13 +318,6 @@ class ProductAnalyzer:
             new_side_effects_list.append(data)
         return new_side_effects_list
 
-    # проверка дублирования рекомендация при добавлении
-    def check_recoms_duplicating(self, recom: Recommendation) -> bool:
-        for recom_dict in self.recoms_serializers:
-            if recom_dict['recom_text'] == recom.recom:
-                return True
-        return False
-
     # создание списка выходных сериалайзеров эффектов
     def make_effects_serializers(self) -> None:
         effect_ingrs = []
@@ -401,19 +372,99 @@ class ProductAnalyzer:
     # создание списка выходных сериалайзеров рекомендаций
     def make_recoms_serializers(self) -> None:
         for inci in self.incis:
-            recoms = get_all_recoms_by_inci(inci)
-            if recoms is not None:
-                for recom in recoms:
-                    add_new_recom = self.check_recoms_duplicating(recom)
-                    if add_new_recom:
-                        pass
-                    else:
+            if inci is not None:
+                recoms = get_all_recoms_by_inci(inci)
+                if recoms is not None:
+                    for recom in recoms:
+                        add_new_recom = self.check_recoms_duplicating(recom)
+                        if add_new_recom:
+                            pass
+                        else:
+                            data = {
+                                'recom_text': recom.recom,
+                            }
+                            self.recoms_serializers.append(data)
+
+    #
+    def make_comb_serializers(self) -> None:
+        combinations = []
+        for inci in self.incis:
+            if inci is not None:
+                combs = get_all_combs_by_inci(inci)
+                if combs is not None:
+                    for comb in combs:
                         data = {
-                            'recom_text': recom.recom,
+                            'ingr_name': comb.inci_id_2.inci_name,
+                            'comb_type': comb.comb_type,
+                            'description': comb.combination
                         }
-                        self.recoms_serializers.append(data)
+                        combinations.append(data)
+        combinations = self.filter_combs_by_min_value(combinations)
+        all_combs = [[], [], []]
+        for comb in combinations:
+            index_comb = COMBINATIONS.index(comb['comb_type'])
+            all_combs[index_comb].append({'ingr_name': comb['ingr_name'], 'description': comb['description']})
+        comb_types = ['Рекомендуется', 'Допустимо с осторожностью', 'Не рекомендуется']
+        self.comb_serializers = [
+            {'comb_type': comb_types[i], 'combination': all_combs[i]} for i in range(0, 3)
+        ]
 
+    #
+    def make_ingredients_serializers(self):
+        for i in range(0, self.quantity):
+            inci = self.incis[i]
+            inci_types = []
+            if inci is not None:
 
+                type_options = get_type_options_by_inci(inci)
+                if len(type_options) == 1:
+                    inci_types = [type_options[0].type_id.type_short]
+                else:
+                    for type_option in type_options:
+                        if type_option.conc is None or type_option.conc == self.concs[i]:
+                            inci_types.append(type_option.type_id.type_short)
+            inci_name = ''
+            if inci is not None:
+                inci_name = 'INCI имя - ' + inci.inci_name
+
+            description = ''
+            if inci is not None:
+                description = inci.description
+
+            types_str = ''
+            if len(inci_types) > 0:
+                types_str += 'Используется как '
+            if len(inci_types) == 1:
+                types_str += inci_types[0]
+            elif len(inci_types) == 2:
+                types_str += inci_types[0] + ' и ' + inci_types[1]
+            elif len(inci_types) > 2:
+                for inci_type in inci_types:
+                    if inci_type is not inci_types[-1]:
+                        types_str += inci_type + ', '
+                    else:
+                        types_str = types_str[:-2]
+                        types_str += ' и ' + inci_type
+
+            effects_str = ''
+            if inci is not None and check_if_active_by_inci(inci):
+                effect_list = get_positive_features_by_inci(inci)
+                for effect in effect_list:
+                    effects_str += effect.effect + ', '
+            if len(effects_str) > 0:
+                effects_str = effects_str[:-2]
+                effects_str = 'Эффект: ' + effects_str
+
+            data = {
+                'ingr_name': self.ingr_names[i],
+                'inci_name': inci_name,
+                'description': description,
+                'type_name': types_str,
+                'effect': effects_str
+            }
+            self.ingr_serializers.append(data)
+
+    #
     def get_result(self) -> AnalyzedSerializer:
         self.get_data()
         self.get_common_info()
@@ -422,12 +473,14 @@ class ProductAnalyzer:
         self.make_side_effects_serializers()
         self.make_recoms_serializers()
         self.make_comb_serializers()
+        self.make_ingredients_serializers()
         data = {
             'data': self.commons_serializer.data,
             'effects': self.effects_serializers,
             'side_effects': self.side_effects_serializers,
             'recoms': self.recoms_serializers,
             'combs': self.comb_serializers,
+            'ingrs': self.ingr_serializers
         }
         return AnalyzedSerializer(data)
 
@@ -439,10 +492,6 @@ class VKRService:
     def __init__(self):
         pass
 
-    # def get_analysis(self, to_analyze: ToAnalyzeSerializer) -> AnalyzedSerializer:
-    #     analyzer = ProductAnalyzer(to_analyze)
-    #     return analyzer.get_result()
-
     def post_temp_record(self, to_analyze: ToAnalyzeSerializer) -> int:
         ingr_list = ''
         conc_list = ''
@@ -453,7 +502,7 @@ class VKRService:
             conc_list += ', '
         return add_temp_record(ingr_list=ingr_list, conc_list=conc_list)
 
-    def post_record(self, to_analyze: ToAnalyzeSerializer, user_id: int) -> List[int]:
+    def post_record(self, to_analyze: ToAnalyzeSerializer, user: User = None) -> int:
         ingr_list = ''
         conc_list = ''
         for ingr in to_analyze['ingrs']:
@@ -461,10 +510,12 @@ class VKRService:
             ingr_list += ', '
             conc_list += ingr['concentration']
             conc_list += ', '
-        return add_record_now(id=user_id, ingr_list=ingr_list, conc_list=conc_list)
+        ingr_list = ingr_list[:-2]
+        conc_list = conc_list[:-2]
+        return add_record_now(user=user, ingr_list=ingr_list, conc_list=conc_list)
 
-    def get_analysis(self, record_id: int) -> AnalyzedSerializer:
-        record = get_temp_record_by_id(id=record_id)
+    def get_analysis_by_record_id(self, record_id: int) -> AnalyzedSerializer:
+        record = get_record_by_id(id=record_id)
         ingr_list = record.ingr_list.split(', ')
         conc_list = record.conc_list.split(', ')
         # to_analyze = List[dict]
@@ -480,3 +531,16 @@ class VKRService:
         if to_analyze_serializer.is_valid():
             analyzer = ProductAnalyzer(to_analyze_serializer)
             return analyzer.get_result()
+
+    def get_analysis(self, to_analyze: ToAnalyzeSerializer) -> AnalyzedSerializer:
+        if to_analyze.is_valid():
+            self.post_temp_record(to_analyze)
+            analyzer = ProductAnalyzer(to_analyze)
+            return analyzer.get_result()\
+
+    def delete_record_by_id(self, record_id) -> None:
+        delete_record_by_id(record_id)
+
+    def get_all_ingr_names(self) -> AllNamesSerializer:
+        all_ingr_names = get_all_ingredient_names()
+        return AllNamesSerializer(data={'ingr_names': all_ingr_names})

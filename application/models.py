@@ -145,7 +145,7 @@ class Combination(Model):
 
 class Record(Model):
     id = AutoField(primary_key=True)
-    user_id = ForeignKey(User, verbose_name='User id', null=False, on_delete=CASCADE)
+    user_id = ForeignKey(User, verbose_name='User id', null=True, on_delete=CASCADE)
     ingr_list = TextField('Ingredient list', null=False, unique=False)
     conc_list = TextField('Concentration list', null=True, unique=False)
     brand_name = TextField('Brand', null=True)
