@@ -11,7 +11,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import api_view, permission_classes
 
 from .serializers import *
-from .services.product_analyzer import *
+from .services.vkr_service import *
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.authentication import TokenAuthentication
 
@@ -71,11 +71,13 @@ def analyze(request):
     # return redirect('home/')
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
+
 class Analyze(GenericAPIView):
     serializer_class = ToAnalyzeSerializer
     renderer_classes = [JSONRenderer]
 
-    def post(self, request: Request) -> Response:
+    def get(self, request: Request) -> Response:
         """ Создать запись для анализа """
         serializer = ToAnalyzeSerializer(data=request.data)
         if serializer.is_valid():
@@ -89,32 +91,6 @@ class Analyze(GenericAPIView):
             return redirect(new_url)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-# @api_view(['GET'])
-# def get_analysis(request, record_id: int) -> Response:
-#     analyzed = service.get_analysis_by_record_id(record_id)
-#     serializer = AnalyzedSerializer(data=analyzed)
-#     if serializer.is_valid():
-#         return Response(serializer.data, status=status.HTTP_200_OK)
-#     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        # return Response(data=request.user.is_authenticated, status=status.HTTP_200_OK)
-        # to_analyze = request.data
-        # try:
-        #     res = post_record(to_analyze, request.user)
-        #     return Response(data=res, status=status.HTTP_200_OK)
-        # # if not bool(request.user.is_authenticated):
-        # #     res = service.post_temp_record(to_analyze)
-        # #     return Response(data=res, status=status.HTTP_200_OK)
-        # # elif bool(request.user.is_authenticated):
-        # #     user_id = request.user.id
-        # #     res = service.post_record(to_analyze, user_id)
-        # #     data = {
-        # #         'user_id': res[1],
-        # #         'record_id': res[0]
-        # #     }
-        # #     return Response(data=data, status=status.HTTP_200_OK)
-        # except Exception as e:
-        #     res = service.post_temp_record(to_analyze)
-        #     return Response(data=res, status=status.HTTP_200_OK)
 
 class GetAnalysis(GenericAPIView):
     serializer_class = AnalyzedSerializer
@@ -127,5 +103,14 @@ class GetAnalysis(GenericAPIView):
             service.delete_record_by_id(record_id)
         return Response(analyzed.data, status=status.HTTP_200_OK)
         # return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@permission_classes([IsAuthenticated])
+@api_view(['GET'])
+def get_records(request: Request, option) -> Response:
+    user_id = request.user.id
+    all_records = service.get_records(user_id, option)
+    if all_records.is_valid():
+        return Response(all_records.data, status=status.HTTP_200_OK)
+    return Response(all_records.errors, status=status.HTTP_400_BAD_REQUEST)
 
 

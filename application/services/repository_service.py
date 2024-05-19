@@ -246,10 +246,10 @@ def get_record_by_id(id: int) -> Optional[Record]:
 def get_temp_record_by_id(id: int) -> Optional[Record]:
     return TempRecord.objects.filter(id=id).first()
 
-def get_all_records_by_user_id(id: int) -> Record:
+def get_all_records_by_user_id(id: int) -> List[Record]:
     return Record.objects.filter(user_id=id).all()
 
-def get_favorites_by_user_id(id: int) -> Record:
+def get_favorites_by_user_id(id: int) -> List[Record]:
     return Record.objects.filter(user_id=id, favorite=True).all()
 
 # def add_record(id: int, ingr_list: str, date_time: datetime) -> None:

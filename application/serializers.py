@@ -49,7 +49,9 @@ class IngrResSerializerShort(serializers.Serializer):
 
 
 class IngrResSerializerLong(serializers.Serializer):
-    ingr_name = serializers.CharField(max_length=100, required=True)
+    inci_name = serializers.CharField(max_length=100, required=True)
+    ingr_names = AllNamesSerializer(required=True)
+
     # ... потом доделаю
 
 class CombSerializer(serializers.Serializer):
@@ -61,6 +63,7 @@ class CombWithTypeSerializer(serializers.Serializer):
     combination = serializers.ListField(child=CombSerializer())
 
 class ProductDataSerializer(serializers.Serializer):
+    #
     vegan = serializers.CharField(max_length=300, required=True)
     natural = serializers.CharField(max_length=300, required=True)
     pregnant = serializers.CharField(max_length=300, required=True)
@@ -75,3 +78,15 @@ class AnalyzedSerializer(serializers.Serializer):
     recoms = serializers.ListField(child=RecomSerializer())
     ingrs = serializers.ListField(child=IngrResSerializerShort())
     combs = serializers.ListField(child=CombWithTypeSerializer())
+
+class RecordSerializer(serializers.Serializer):
+    record_id = serializers.IntegerField(required=True)
+    favorite = serializers.BooleanField(required=True)
+    ingrs = ToAnalyzeSerializer(required=True)
+    date_time = serializers.DateTimeField(required=True)
+    # brand_name = serializers.CharField(max_length=100, required=False)
+    # product_name = serializers.CharField(max_length=100, required=False)
+
+class AllRecordsSerializer(serializers.Serializer):
+    records = serializers.ListField(child=RecordSerializer())
+

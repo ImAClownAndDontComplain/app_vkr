@@ -12,6 +12,7 @@ class ProductAnalyzer:
     def __init__(self, to_analyze: ToAnalyzeSerializer):
         self.ingredients = to_analyze.data['ingrs']
         self.quantity = 0
+        self.inci_quantity = 0
         self.high_conc = 0
         self.medium_conc = 0
         self.ingr_names = []
@@ -117,6 +118,7 @@ class ProductAnalyzer:
             self.ingr_names.append(ingr_name)
             inci = get_inci_by_ingredient_name(ingr_name)
             if inci is not None:
+                self.inci_quantity += 1
                 self.incis.append(inci)
                 if ingr_conc is not None:
                     self.get_specific_concentrations(inci, ingr_conc)
@@ -169,15 +171,17 @@ class ProductAnalyzer:
     # общие характеристики всего средства
     def get_common_info(self) -> None:
         # vegan, natural, pregnant, hypoal
-        commons = [True, True, True, True]
+        # percentage
+        commons = [True, None, True, True]
+        naturals = 0
 
         for inci in self.incis:
             if inci is not None:
                 if commons[0] is True and inci.vegan is False:
                     commons[0] = False
 
-                if commons[1] is True and inci.source != 'Натуральное происхождение':
-                    commons[1] = False
+                if inci.source == 'Естественное происхождение':
+                    naturals += 1
 
                 features = get_features_by_inci(inci)
                 if features is not None:
@@ -199,11 +203,6 @@ class ProductAnalyzer:
         else:
             common_0 = 'Не веганское (содержит компонент(ы) животного происхождения)'
 
-        if commons[1]:
-            common_1 = 'Натуральное (не содержит компонентов синтетического происхождения)'
-        else:
-            common_1 = 'Не натуральное (содержит компонент(ы) синтетического происхождения)'
-
         if commons[2]:
             common_2 = 'Безопасно для беременных'
         else:
@@ -216,7 +215,7 @@ class ProductAnalyzer:
             
         data = {
             'vegan': common_0,
-            'natural': common_1,
+            'natural': str(naturals/self.inci_quantity * 100),
             'pregnant': common_2,
             'hypoallergenic': common_3,
         }
@@ -485,62 +484,3 @@ class ProductAnalyzer:
         return AnalyzedSerializer(data)
 
 
-
-
-
-class VKRService:
-    def __init__(self):
-        pass
-
-    def post_temp_record(self, to_analyze: ToAnalyzeSerializer) -> int:
-        ingr_list = ''
-        conc_list = ''
-        for ingr in to_analyze['ingrs']:
-            ingr_list += ingr['ingr_name']
-            ingr_list += ', '
-            conc_list += ingr['concentration']
-            conc_list += ', '
-        return add_temp_record(ingr_list=ingr_list, conc_list=conc_list)
-
-    def post_record(self, to_analyze: ToAnalyzeSerializer, user: User = None) -> int:
-        ingr_list = ''
-        conc_list = ''
-        for ingr in to_analyze['ingrs']:
-            ingr_list += ingr['ingr_name']
-            ingr_list += ', '
-            conc_list += ingr['concentration']
-            conc_list += ', '
-        ingr_list = ingr_list[:-2]
-        conc_list = conc_list[:-2]
-        return add_record_now(user=user, ingr_list=ingr_list, conc_list=conc_list)
-
-    def get_analysis_by_record_id(self, record_id: int) -> AnalyzedSerializer:
-        record = get_record_by_id(id=record_id)
-        ingr_list = record.ingr_list.split(', ')
-        conc_list = record.conc_list.split(', ')
-        # to_analyze = List[dict]
-        to_analyze = []
-        for i in range(0, len(ingr_list)):
-            data = {'ingr_name': ingr_list[i],
-                    'concentration': conc_list[i]}
-            to_analyze.append(data)
-        data = {
-            'ingrs': to_analyze,
-        }
-        to_analyze_serializer = ToAnalyzeSerializer(data=data)
-        if to_analyze_serializer.is_valid():
-            analyzer = ProductAnalyzer(to_analyze_serializer)
-            return analyzer.get_result()
-
-    def get_analysis(self, to_analyze: ToAnalyzeSerializer) -> AnalyzedSerializer:
-        if to_analyze.is_valid():
-            self.post_temp_record(to_analyze)
-            analyzer = ProductAnalyzer(to_analyze)
-            return analyzer.get_result()\
-
-    def delete_record_by_id(self, record_id) -> None:
-        delete_record_by_id(record_id)
-
-    def get_all_ingr_names(self) -> AllNamesSerializer:
-        all_ingr_names = get_all_ingredient_names()
-        return AllNamesSerializer(data={'ingr_names': all_ingr_names})

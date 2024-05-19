@@ -6,5 +6,6 @@ urlpatterns = [
   path('hz/', views.get_username, name='hz'),
   path('all_ingr_names/', views.get_all_ingr_names, name='all_ingr_names'),
   path('analyze/', views.Analyze.as_view(), name='analyze'),
-  path('analyze/get_analysis/<int:record_id>', views.GetAnalysis.as_view(), name='get_analysis')
+  path('analyze/get_analysis/<int:record_id>', views.GetAnalysis.as_view(), name='get_analysis'),
+  path('profile/<str:option>', views.get_records, name='profile')
 ]
