@@ -171,7 +171,6 @@ class ProductAnalyzer:
     # общие характеристики всего средства
     def get_common_info(self) -> None:
         # vegan, natural, pregnant, hypoal
-        # percentage
         commons = [True, None, True, True]
         naturals = 0
 
@@ -192,11 +191,6 @@ class ProductAnalyzer:
 
                         if commons[3] is True and feature.id == 5:
                             commons[3] = False
-        #
-        # common_0 = ''
-        # common_1 = ''
-        # common_2 = ''
-        # common_3 = ''
         
         if commons[0]:
             common_0 = 'Веганское (не содержит компонентов животного происхождения)'
@@ -212,7 +206,9 @@ class ProductAnalyzer:
             common_3 = 'Гипоаллергенное'
         else:
             common_3 = 'Не гипоаллергенное'
-            
+
+        if self.inci_quantity == 0: self.inci_quantity = 1
+
         data = {
             'vegan': common_0,
             'natural': str(naturals/self.inci_quantity * 100),
@@ -241,7 +237,6 @@ class ProductAnalyzer:
                             if not add_new_side_effect:
                                 self.side_effects_list.append(feature)
                                 self.inci_side_effects_list.append([inci])
-        pass
 
     # получение максимальной концентрации компонента по отношению к эффекту
     def get_max_concentration(self, inci_list: List[Inci]) -> str:
@@ -249,51 +244,50 @@ class ProductAnalyzer:
         min_index = min(inci_indices)
         return self.concs[min_index]
 
-    # алгоритм для проверки того, обусловлены ли разные эффекты одинаковым набором ингредиентов
-    def check_same_ingredients_algorithm(self, effects_list: List, ingrs_list: List) -> (bool, List, List):
-        changed = False
-        n = len(effects_list) - 1
-        for i in range(0, n):
-            for j in range(0, n):
-                if i != j:
-                    if ingrs_list[i] == ingrs_list[j]:
-                        changed = True
-                        effects_list[i] += ', ' + effects_list[j]
-                        effects_list.pop(j)
-                        ingrs_list.pop(j)
-                        n -= 1
-        if not changed:
-            return (False, effects_list, ingrs_list)
-        else:
-            return (True, effects_list, ingrs_list)
-
-    # проверка и конкатенация эффектов
-    def check_same_ingredients_for_effects(self, effect_with_intensity_list: dict) -> dict:
-        intensity = effect_with_intensity_list['intensity']
-        effect_list = effect_with_intensity_list['effect_with_ingrs']
-        only_effects_list = []
-        only_ingrs_list = []
-        for effect in effect_list:
-            only_effects_list.append(effect['effect'])
-            only_ingrs_list.append(effect['ingrs'])
-        changed = self.check_same_ingredients_algorithm(only_effects_list, only_ingrs_list)
-        if changed[0] is False:
-            return effect_with_intensity_list
-        new_effects_list = []
-        n = len(changed[1])
-        only_effects_list = changed[1]
-        only_ingrs_list = changed[2]
-        for i in range(0, n):
-            data = {
-                'effect': only_effects_list[i],
-                'ingrs': only_ingrs_list[i]
-            }
-            new_effects_list.append(data)
-        data = {
-            'intensity': intensity,
-            'effect_with_ingrs': new_effects_list
-        }
-        return data
+    # # алгоритм для проверки того, обусловлены ли разные эффекты одинаковым набором ингредиентов
+    # def check_same_ingredients_algorithm(self, effects_list: List, ingrs_list: List) -> (bool, List, List):
+    #     changed = False
+    #     n = len(effects_list) - 1
+    #     for i in range(0, n):
+    #         for j in range(0, n):
+    #             if i != j:
+    #                 if ingrs_list[i] == ingrs_list[j]:
+    #                     changed = True
+    #                     effects_list[i] += ', ' + effects_list[j]
+    #                     effects_list.pop(j)
+    #                     ingrs_list.pop(j)
+    #                     n -= 1
+    #     if not changed:
+    #         return (False, effects_list, ingrs_list)
+    #     else:
+    #         return (True, effects_list, ingrs_list)
+    # # проверка и конкатенация эффектов
+    # def check_same_ingredients_for_effects(self, effect_with_intensity_list: dict) -> dict:
+    #     intensity = effect_with_intensity_list['intensity']
+    #     effect_list = effect_with_intensity_list['effect_with_ingrs']
+    #     only_effects_list = []
+    #     only_ingrs_list = []
+    #     for effect in effect_list:
+    #         only_effects_list.append(effect['effect'])
+    #         only_ingrs_list.append(effect['ingrs'])
+    #     changed = self.check_same_ingredients_algorithm(only_effects_list, only_ingrs_list)
+    #     if changed[0] is False:
+    #         return effect_with_intensity_list
+    #     new_effects_list = []
+    #     n = len(changed[1])
+    #     only_effects_list = changed[1]
+    #     only_ingrs_list = changed[2]
+    #     for i in range(0, n):
+    #         data = {
+    #             'effect': only_effects_list[i],
+    #             'ingrs': only_ingrs_list[i]
+    #         }
+    #         new_effects_list.append(data)
+    #     data = {
+    #         'intensity': intensity,
+    #         'effect_with_ingrs': new_effects_list
+    #     }
+    #     return data
 
     # проверка и конкатенация побочек
     def check_same_ingredients_for_side_effects(self, side_effect_list: List[dict]) -> List[dict]:
@@ -342,10 +336,10 @@ class ProductAnalyzer:
             index_effect = CONCENTRATIONS.index(max_concs[i])
             all_effects[index_effect].append(effect)
 
-        intensities = ['Сильное действие:', 'Среднее по силе действие:', 'Слабое действие:']
+        intensities = ['Сильное действие', 'Среднее действие', 'Слабое действие']
         all_effects_data = [{'intensity': intensities[i], 'effect_with_ingrs': all_effects[i]} for i in range(0, 3)]
-        for i in range(0, len(all_effects_data)):
-            all_effects_data[i] = self.check_same_ingredients_for_effects(all_effects_data[i])
+        # for i in range(0, len(all_effects_data)):
+        #     all_effects_data[i] = self.check_same_ingredients_for_effects(all_effects_data[i])
         self.effects_serializers = all_effects_data
 
     # создание списка выходных сериалайзеров побочек
@@ -366,7 +360,7 @@ class ProductAnalyzer:
                 return None
 
             self.side_effects_serializers.append(side_effect_serializer.data)
-        self.side_effects_serializers = self.check_same_ingredients_for_side_effects(self.side_effects_serializers)
+        # self.side_effects_serializers = self.check_same_ingredients_for_side_effects(self.side_effects_serializers)
 
     # создание списка выходных сериалайзеров рекомендаций
     def make_recoms_serializers(self) -> None:
@@ -482,5 +476,123 @@ class ProductAnalyzer:
             'ingrs': self.ingr_serializers
         }
         return AnalyzedSerializer(data)
+
+
+
+
+
+class IngredientInfo:
+    def __init__(self):
+        # self.ingr_name = ingr_name
+        self.inci = None
+        self.synonyms = None
+        self.conc_list = []
+        self.types_list = []
+        self.effects_list = []
+        self.side_effects_list = []
+        self.source = None
+        self.vegan = None
+
+    conc_list = List[InciType]
+    types_list = List[List[Type]]
+    effects_list = List[Feature]
+    side_effects_list = List[Feature]
+
+    def get_synonyms(self, ingr_name: str):
+        self.inci = get_inci_by_ingredient_name(ingr_name)
+        if self.inci is None:
+            return
+        self.synonyms = [ingr.ingredient for ingr in get_all_ingredients_by_inci(self.inci)]
+        self.source = self.inci.source
+        if self.inci.vegan:
+            self.vegan = "Веганский"
+        else:
+            self.vegan = "Животного происхождения"
+
+    #
+    def check_types_duplicating(self, inci_type: InciType, type: Type) -> bool:
+        for i in range(0, len(self.conc_list)):
+            type_conc = self.conc_list[i]
+            if inci_type.conc == type_conc.conc:
+                self.types_list[i].append(type)
+                return True
+        return False
+
+
+    def get_types(self):
+        if self.inci is None:
+            return
+        inci_types = get_type_options_by_inci(self.inci)
+        types = get_types_by_inci(self.inci)
+        for i in range(0, len(types)):
+            add_new_type = self.check_types_duplicating(inci_types[i], types[i])
+            if not add_new_type:
+                self.conc_list.append(inci_types[i])
+                self.types_list.append([types[i]])
+
+    def get_all_effects(self):
+        self.effects_list = get_features_by_inci(self.inci)
+        self.side_effects_list = get_negative_features_by_inci(self.inci)
+
+    def get_result(self, ingr_name: str) -> IngrResSerializerLong:
+        self.get_synonyms(ingr_name)
+        self.get_types()
+        self.get_all_effects()
+
+        types_with_conc = []
+        for i in range(0, len(self.types_list)):
+            types_with_descr = []
+            for type in self.types_list[i]:
+                data = {
+                    'type_name': type.type_short,
+                    'type_description': type.type_description
+                }
+                types_with_descr.append(data)
+
+            conc = ''
+            if self.conc_list[i].conc is None:
+                conc = ''
+            elif self.conc_list[i].conc == 'High':
+                conc = 'Высокая концентрация'
+            elif self.conc_list[i].conc == 'Medium':
+                conc = 'Средняя концентрация'
+            elif self.conc_list[i].conc == 'Low':
+                conc = 'Низкая концентрация'
+            data = {
+                'concentration': conc,
+                'type': types_with_descr
+            }
+            types_with_conc.append(data)
+
+        effects = []
+        side_effects = []
+
+        for effect in self.effects_list:
+            if effect.benefit:
+                effects.append(effect.effect)
+            else:
+                side_effects.append(effect.effect)
+
+        ingr_names = {'ingr_names': self.synonyms}
+
+        data = {
+            'inci_name': self.inci.inci_name,
+            'synonyms': ingr_names,
+            'source': self.source,
+            'vegan': self.vegan,
+            'types': types_with_conc,
+            'effects': effects,
+            'side_effects': side_effects
+        }
+
+        return IngrResSerializerLong(data=data)
+
+
+
+
+
+
+
+
 
 

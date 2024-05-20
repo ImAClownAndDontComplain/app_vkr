@@ -47,12 +47,25 @@ class IngrResSerializerShort(serializers.Serializer):
     type_name = serializers.CharField(max_length=100, required=False)
     effect = serializers.CharField(max_length=200, required=False)
 
+class TypeSerializer(serializers.Serializer):
+    type_name = serializers.CharField(max_length=100, required=False)
+    type_description = serializers.CharField(max_length=200, required=False)
+
+class IngrTypeSerializer(serializers.Serializer):
+    concentration = serializers.CharField(max_length=100, required=False)
+    type = serializers.ListField(child=TypeSerializer())
+
 
 class IngrResSerializerLong(serializers.Serializer):
     inci_name = serializers.CharField(max_length=100, required=True)
-    ingr_names = AllNamesSerializer(required=True)
+    synonyms = AllNamesSerializer(required=True)
+    source = serializers.CharField(max_length=100, required=False)
+    vegan = serializers.CharField(max_length=100, required=False)
+    types = serializers.ListField(child=IngrTypeSerializer())
+    effects = serializers.ListField(child=serializers.CharField(max_length=200), required=False)
+    side_effects = serializers.ListField(child=serializers.CharField(max_length=200), required=False)
 
-    # ... потом доделаю
+    # ... Название инси, синонимы, происхождение, веган, роль в косметике, полезные/не полезные свойства
 
 class CombSerializer(serializers.Serializer):
     ingr_name = serializers.CharField(max_length=100, required=True)
@@ -89,4 +102,5 @@ class RecordSerializer(serializers.Serializer):
 
 class AllRecordsSerializer(serializers.Serializer):
     records = serializers.ListField(child=RecordSerializer())
+
 

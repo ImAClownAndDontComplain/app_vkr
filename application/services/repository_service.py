@@ -90,8 +90,8 @@ def get_all_ingredient_names() -> List[str]:
     # return [ingredient.ingredient for ingredient in ingredients]
     return res
 
-def get_all_ingredients_by_inci_id(id: int) -> Ingredient:
-    return Ingredient.objects.filter(inci_id=id).all()
+def get_all_ingredients_by_inci(inci: Inci) -> List[Ingredient]:
+    return list(Ingredient.objects.filter(inci_id=inci).all())
 
 def get_all_ingredients_by_inci_name(name: str) -> Ingredient:
     inci = get_inci_by_name(name)
@@ -116,15 +116,14 @@ def get_type_options_by_inci(inci: Inci) -> List[InciType]:
     inci_types = InciType.objects.filter(inci_id=inci).all()
     return list(inci_types)
 
-
-def get_types_by_inci_id(id: int) -> List[Type]:
-    inci_id = get_inci_by_id(id)
-    incis = InciType.objects.filter(inci_id=inci_id).all()
-    res = []
-    for inci in incis:
-        type = inci.type_id
-        res.append(type)
-    return res
+# def get_types_by_inci(inci: Inci) -> List[Type]:
+#     # inci_id = get_inci_by_id(id)
+#     incis = InciType.objects.filter(inci_id=inci).all()
+#     res = []
+#     for inci in incis:
+#         inci_type = inci.type_id
+#         res.append(inci_type)
+#     return res
 
 def get_types_by_inci_name(name: str) -> List[Type]:
     inci_name = get_inci_by_name(name)
@@ -142,8 +141,10 @@ def get_inci_by_ingredient_id(id: int) -> Optional[Inci]:
     return get_inci_by_id(inci_id.id)
 
 def get_inci_by_ingredient_name(name: str) -> Optional[Inci]:
-    inci_id = get_ingredient_by_name(name).inci_id
-    return get_inci_by_id(inci_id.id)
+    inci_id = get_ingredient_by_name(name)
+    if inci_id is None: return None
+
+    return get_inci_by_id(inci_id.inci_id.id)
 
 
 # combo
@@ -192,6 +193,14 @@ def get_positive_features_by_inci(inci: Inci) -> List[Feature]:
     features = []
     for feature in inci_feature:
         if feature.feature_id.benefit:
+            features.append(feature.feature_id)
+    return features
+
+def get_negative_features_by_inci(inci: Inci) -> List[Feature]:
+    inci_feature = InciFeature.objects.filter(inci_id=inci).all()
+    features = []
+    for feature in inci_feature:
+        if not feature.feature_id.benefit:
             features.append(feature.feature_id)
     return features
 

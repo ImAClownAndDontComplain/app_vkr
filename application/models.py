@@ -33,7 +33,7 @@ class InciType(Model):
         db_table = 'inci_type'
 
     def __str__(self):
-        return str({'INCI_id': self.inci_id, 'Type_id': self.type_id})
+        return str({'INCI_id': self.inci_id, 'Type_id': self.type_id, 'conc': self.conc})
 
 
 class Inci(Model):

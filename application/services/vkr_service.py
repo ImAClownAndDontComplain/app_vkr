@@ -1,7 +1,8 @@
 from ..serializers import *
 # from ..models import *
 from .repository_service import *
-from .product_analyzer import ProductAnalyzer
+from .product_analyzer import ProductAnalyzer, IngredientInfo
+
 
 class VKRService:
     def __init__(self):
@@ -78,4 +79,8 @@ class VKRService:
             'records': all_records_serializer
         }
         return AllRecordsSerializer(data=data)
+
+    def get_ingredient_info(self, ingr_name: str) -> IngrResSerializerLong:
+        ingr_info = IngredientInfo()
+        return ingr_info.get_result(ingr_name)
 

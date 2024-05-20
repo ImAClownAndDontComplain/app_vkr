@@ -113,4 +113,11 @@ def get_records(request: Request, option) -> Response:
         return Response(all_records.data, status=status.HTTP_200_OK)
     return Response(all_records.errors, status=status.HTTP_400_BAD_REQUEST)
 
+@api_view(['GET'])
+def get_ingredient_info(request: Request, ingr_name: str) -> Response:
+    ingr_info = service.get_ingredient_info(ingr_name)
+    if ingr_info.is_valid():
+        return Response(ingr_info.data, status=status.HTTP_200_OK)
+    return Response(ingr_info.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
