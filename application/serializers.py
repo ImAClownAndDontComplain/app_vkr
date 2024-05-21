@@ -60,7 +60,7 @@ class IngrResSerializerLong(serializers.Serializer):
     synonyms = AllNamesSerializer(required=True)
     source = serializers.CharField(max_length=100, required=False)
     vegan = serializers.CharField(max_length=100, required=False)
-    types = serializers.ListField(child=IngrTypeSerializer())
+    types = serializers.ListField(child=IngrTypeSerializer(), required=False)
     effects = serializers.ListField(child=serializers.CharField(max_length=200), required=False)
     side_effects = serializers.ListField(child=serializers.CharField(max_length=200), required=False)
 
@@ -113,8 +113,8 @@ class IngrNamesSerializer(serializers.Serializer):
 class IngrListSerializer(serializers.Serializer):
     ingredients = serializers.ListField(child=IngrNamesSerializer())
 
-class IngrSearchSerializer(serializers.Serializer):
-    ingr_name = serializers.CharField(max_length=100, required=False)
-    ingr_effect = serializers.CharField(max_length=100, required=False)
+# class IngrSearchSerializer(serializers.Serializer):
+#     ingr_name = serializers.CharField(max_length=100, required=False)
+#     ingr_effect = serializers.CharField(max_length=100, required=False)
 
 

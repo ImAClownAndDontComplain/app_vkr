@@ -501,7 +501,9 @@ class IngredientInfo:
     def get_synonyms(self, ingr_name: str):
         self.inci = get_inci_by_ingredient_name(ingr_name)
         if self.inci is None:
-            return
+            self.inci = get_inci_by_name(ingr_name)
+            if self.inci is None:
+                return
         self.synonyms = [ingr.ingredient for ingr in get_all_ingredients_by_inci(self.inci)]
         self.source = self.inci.source
         if self.inci.vegan:
@@ -551,7 +553,7 @@ class IngredientInfo:
 
             conc = ''
             if self.conc_list[i].conc is None:
-                conc = ''
+                conc = '0'
             elif self.conc_list[i].conc == 'High':
                 conc = 'Высокая концентрация'
             elif self.conc_list[i].conc == 'Medium':
