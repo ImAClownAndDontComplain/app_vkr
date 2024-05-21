@@ -19,8 +19,8 @@ def get_inci_by_id(id: int) -> Optional[Inci]:
 def get_inci_by_name(name: str) -> Optional[Inci]:
     return Inci.objects.filter(inci_name=name).first()
 
-def get_all_inci() -> Inci:
-    return Inci.objects.all()
+def get_all_inci() -> List[Inci]:
+    return list(Inci.objects.all())
 
 def add_description(id: int) -> None:
     inci = get_inci_by_id(id)
@@ -261,11 +261,6 @@ def get_all_records_by_user_id(id: int) -> List[Record]:
 def get_favorites_by_user_id(id: int) -> List[Record]:
     return Record.objects.filter(user_id=id, favorite=True).all()
 
-# def add_record(id: int, ingr_list: str, date_time: datetime) -> None:
-#     user = get_user_by_id(id)
-#     record = Record.objects.create(User=user, ingr_list=ingr_list, datetime=date_time)
-#     record.save()
-#     return
 
 def add_record(id: int, ingr_list: str, conc_list: str, date_time: datetime) -> None:
     user = get_user_by_id(id)
@@ -273,12 +268,6 @@ def add_record(id: int, ingr_list: str, conc_list: str, date_time: datetime) -> 
     record.save()
     return
 
-# def add_record_now(id: int, ingr_list: str, conc_list: str) -> int:
-#     user = get_user_by_id(id)
-#     date_time = datetime.now()
-#     record = Record.objects.create(user_id=user, ingr_list=ingr_list, conc_list=conc_list, datetime=date_time)
-#     record.save()
-#     return record.id
 
 def add_record_now(user: User, ingr_list: str, conc_list: str) -> int:
     date_time = datetime.now()
@@ -345,6 +334,9 @@ def delete_favorites(id: int) -> None:
             if record.favorite is True:
                 record.delete()
     return
+
+def filter_ingredients(ingr_name: str, ingr_effect: str) -> list:
+    pass
 
 
 

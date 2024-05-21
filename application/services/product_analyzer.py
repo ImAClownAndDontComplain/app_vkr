@@ -591,8 +591,67 @@ class IngredientInfo:
 
 
 
+class IngredientFilter:
+    def __init__(self):
+        self.all_incis = []
+        self.all_ingrs = []
+        self.all_effects = []
+        pass
 
+    def get_all_ingredients(self):
+        self.all_incis = get_all_inci()
+        for inci in self.all_incis:
+            ingrs = get_all_ingredients_by_inci(inci)
+            self.all_ingrs.append([ingr.ingredient for ingr in ingrs])
+            effects = get_positive_features_by_inci(inci)
+            self.all_effects.append([effect.effect for effect in effects])
 
+    def filter_ingredients(self, ingr_name: str, ingr_effect: str):
+        for i in range(0, len(self.all_incis)):
+            flag = True
+            for ingr in self.all_ingrs[i]:
+                if ingr_name in ingr.ingredient:
+                    pass
+                else:
+                    flag = False
+                if ingr_effect in self.all_effects[i]:
+                    pass
+                else:
+                    flag = False
+            if not flag:
+                self.all_incis.pop(i)
+                self.all_ingrs.pop(i)
+                self.all_effects.pop(i)
+                i -= 1
+
+    def get_result(self, ingr_name: str, ingr_effect: str):
+        self.get_all_ingredients()
+        self.filter_ingredients(ingr_name, ingr_effect)
+        ingrs = []
+        for i in range(0, len(self.all_incis)):
+            ingr_names = {'ingr_names': self.all_ingrs[i]}
+            data = {
+                'inci_name': self.all_incis[i].inci_name,
+                'synonyms': ingr_names
+            }
+            ingrs.append(data)
+        return IngrListSerializer(data={'ingredients': ingrs})
+
+    def get_list(self):
+        self.get_all_ingredients()
+        ingrs = []
+        effects = []
+        for i in range(0, len(self.all_incis)):
+            # ingr_names = {'ingr_names': self.all_ingrs[i]}
+            data = {
+                'inci_id': self.all_incis[i].id,
+                'inci_name': self.all_incis[i].inci_name,
+                'synonyms': self.all_ingrs[i],
+                'effects': self.all_effects[i]
+            }
+            ingrs.append(data)
+
+        return IngrListSerializer(data={'ingredients': ingrs})
 
 
 

@@ -55,7 +55,6 @@ class IngrTypeSerializer(serializers.Serializer):
     concentration = serializers.CharField(max_length=100, required=False)
     type = serializers.ListField(child=TypeSerializer())
 
-
 class IngrResSerializerLong(serializers.Serializer):
     inci_name = serializers.CharField(max_length=100, required=True)
     synonyms = AllNamesSerializer(required=True)
@@ -102,5 +101,20 @@ class RecordSerializer(serializers.Serializer):
 
 class AllRecordsSerializer(serializers.Serializer):
     records = serializers.ListField(child=RecordSerializer())
+
+
+class IngrNamesSerializer(serializers.Serializer):
+    inci_id = serializers.IntegerField(required=True)
+    inci_name = serializers.CharField(max_length=100, required=True)
+    synonyms = ListField(child=serializers.CharField(max_length=100, required=True))
+    effects = serializers.ListField(child=serializers.CharField(max_length=100), required=False)
+
+
+class IngrListSerializer(serializers.Serializer):
+    ingredients = serializers.ListField(child=IngrNamesSerializer())
+
+class IngrSearchSerializer(serializers.Serializer):
+    ingr_name = serializers.CharField(max_length=100, required=False)
+    ingr_effect = serializers.CharField(max_length=100, required=False)
 
 

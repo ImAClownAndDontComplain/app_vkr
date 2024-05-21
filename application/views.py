@@ -62,7 +62,7 @@ def analyze(request):
     serializer = request.data
     if serializer.is_valid():
         if request.user.is_authenticated:
-            res = service.post_record(serializer.validated_data, request.user.id)
+            res = service.post_record(serializer.validated_data, request.user)
             # return Response(res, status=status.HTTP_200_OK)
         else:
             res = service.post_record(serializer.validated_data)
@@ -77,7 +77,7 @@ class Analyze(GenericAPIView):
     serializer_class = ToAnalyzeSerializer
     renderer_classes = [JSONRenderer]
 
-    def get(self, request: Request) -> Response:
+    def post(self, request: Request) -> Response:
         """ Создать запись для анализа """
         serializer = ToAnalyzeSerializer(data=request.data)
         if serializer.is_valid():
@@ -119,5 +119,29 @@ def get_ingredient_info(request: Request, ingr_name: str) -> Response:
     if ingr_info.is_valid():
         return Response(ingr_info.data, status=status.HTTP_200_OK)
     return Response(ingr_info.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class IngredientSearch(GenericAPIView):
+    serializer_class = IngrListSerializer
+    renderer_classes = [JSONRenderer]
+
+    def get(self, request: Request) -> Response:
+        ingr_list = service.ingredient_search()
+        if ingr_list.is_valid():
+            # new_url = 'get_analysis/' + str(res)
+            return Response(ingr_list.data, status=status.HTTP_200_OK)
+        return Response(ingr_list.errors, status=status.HTTP_400_BAD_REQUEST)
+
+# class FilterResult(GenericAPIView):
+#     serializer_class = IngrListSerializer
+#     renderer_classes = [JSONRenderer]
+#
+#     def get(self, request: Request, ingr_name: str, effect: str) -> Response:
+#         ingr_list = service.filter_ingredients(ingr_name, effect)
+#         if ingr_list.is_valid():
+#             # new_url = 'get_analysis/' + str(res)
+#             return redirect(ingr_list.data, status=status.HTTP_200_OK)
+#         return Response(ingr_list.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 

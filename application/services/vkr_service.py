@@ -1,7 +1,7 @@
 from ..serializers import *
 # from ..models import *
 from .repository_service import *
-from .product_analyzer import ProductAnalyzer, IngredientInfo
+from .product_analyzer import ProductAnalyzer, IngredientInfo, IngredientFilter
 
 
 class VKRService:
@@ -83,4 +83,13 @@ class VKRService:
     def get_ingredient_info(self, ingr_name: str) -> IngrResSerializerLong:
         ingr_info = IngredientInfo()
         return ingr_info.get_result(ingr_name)
+
+    def filter_ingredients(self, ingr_name: str, ingr_effect: str) -> IngrListSerializer:
+        ingr_filter = IngredientFilter()
+        return ingr_filter.get_result(ingr_name, ingr_effect)
+
+    def ingredient_search(self) -> IngrListSerializer:
+        ingr_filter = IngredientFilter()
+        return ingr_filter.get_list()
+
 
