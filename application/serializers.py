@@ -41,6 +41,7 @@ class SideEffectSerializer(serializers.Serializer):
 
 
 class IngrResSerializerShort(serializers.Serializer):
+    recognized = serializers.BooleanField(required=True)
     ingr_name = serializers.CharField(max_length=100, required=True)
     inci_name = serializers.CharField(max_length=100, required=False)
     description = serializers.CharField(max_length=200, required=False)

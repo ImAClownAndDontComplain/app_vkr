@@ -448,7 +448,12 @@ class ProductAnalyzer:
                 effects_str = effects_str[:-2]
                 effects_str = 'Эффект: ' + effects_str
 
+            recognized = True
+            if self.incis[i] is None:
+                recognized = False
+
             data = {
+                'recognized': recognized,
                 'ingr_name': self.ingr_names[i],
                 'inci_name': inci_name,
                 'description': description,
