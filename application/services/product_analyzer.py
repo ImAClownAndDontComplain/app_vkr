@@ -504,6 +504,12 @@ class IngredientInfo:
     side_effects_list = List[Feature]
 
     def get_synonyms(self, ingr_name: str):
+        ingr_name_list = list(ingr_name)
+        for i in range(0, len(ingr_name_list)):
+            if ingr_name_list[i] == '_':
+                ingr_name_list[i] = '/'
+        ingr_name = ''.join(ingr_name_list)
+
         self.inci = get_inci_by_ingredient_name(ingr_name)
         if self.inci is None:
             self.inci = get_inci_by_name(ingr_name)
@@ -524,7 +530,6 @@ class IngredientInfo:
                 self.types_list[i].append(type)
                 return True
         return False
-
 
     def get_types(self):
         if self.inci is None:
@@ -658,7 +663,11 @@ class IngredientFilter:
             }
             ingrs.append(data)
 
-        return IngrListSerializer(data={'ingredients': ingrs})
+        effects_list = get_positive_features()
+        for effect in effects_list:
+            effects.append(effect.effect)
+
+        return IngrListSerializer(data={'ingredients': ingrs, 'positive_effects': effects})
 
 
 

@@ -177,6 +177,9 @@ def get_feature_by_id(id: int) -> Optional[Feature]:
 def get_all_features() -> Feature:
     return Feature.objects.all()
 
+def get_positive_features() -> List[Feature]:
+    return list(Feature.objects.filter(benefit=True).all())
+
 def get_features_by_inci_id(id: int) -> Feature:
     inci = get_inci_by_id(id)
     return Feature.objects.filter(inci_id=inci.id).all()

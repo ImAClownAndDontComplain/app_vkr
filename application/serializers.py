@@ -113,6 +113,7 @@ class IngrNamesSerializer(serializers.Serializer):
 
 class IngrListSerializer(serializers.Serializer):
     ingredients = serializers.ListField(child=IngrNamesSerializer())
+    positive_effects = serializers.ListField(child=serializers.CharField(max_length=100))
 
 # class IngrSearchSerializer(serializers.Serializer):
 #     ingr_name = serializers.CharField(max_length=100, required=False)
