@@ -10,6 +10,8 @@ COMBINATIONS = ['Yes', 'Carefully', 'No']
 # 5 allergy
 class ProductAnalyzer:
     def __init__(self, to_analyze: ToAnalyzeSerializer):
+        if to_analyze.is_valid():
+            pass
         self.ingredients = to_analyze.data['ingrs']
         self.quantity = 0
         self.inci_quantity = 0
@@ -290,26 +292,26 @@ class ProductAnalyzer:
     #     return data
 
     # проверка и конкатенация побочек
-    def check_same_ingredients_for_side_effects(self, side_effect_list: List[dict]) -> List[dict]:
-        only_side_effects_list = []
-        only_ingrs_list = []
-        for side_effect in side_effect_list:
-            only_side_effects_list.append(side_effect['side_effect'])
-            only_ingrs_list.append(side_effect['ingrs'])
-        changed = self.check_same_ingredients_algorithm(only_side_effects_list, only_ingrs_list)
-        if changed[0] is False:
-            return side_effect_list
-        n = len(changed[1])
-        only_side_effects_list = changed[1]
-        only_ingrs_list = changed[2]
-        new_side_effects_list = []
-        for i in range(0, n):
-            data = {
-                'side_effect': only_side_effects_list[i],
-                'ingrs': only_ingrs_list[i]
-            }
-            new_side_effects_list.append(data)
-        return new_side_effects_list
+    # def check_same_ingredients_for_side_effects(self, side_effect_list: List[dict]) -> List[dict]:
+    #     only_side_effects_list = []
+    #     only_ingrs_list = []
+    #     for side_effect in side_effect_list:
+    #         only_side_effects_list.append(side_effect['side_effect'])
+    #         only_ingrs_list.append(side_effect['ingrs'])
+    #     changed = self.check_same_ingredients_algorithm(only_side_effects_list, only_ingrs_list)
+    #     if changed[0] is False:
+    #         return side_effect_list
+    #     n = len(changed[1])
+    #     only_side_effects_list = changed[1]
+    #     only_ingrs_list = changed[2]
+    #     new_side_effects_list = []
+    #     for i in range(0, n):
+    #         data = {
+    #             'side_effect': only_side_effects_list[i],
+    #             'ingrs': only_ingrs_list[i]
+    #         }
+    #         new_side_effects_list.append(data)
+    #     return new_side_effects_list
 
     # создание списка выходных сериалайзеров эффектов
     def make_effects_serializers(self) -> None:
@@ -668,6 +670,284 @@ class IngredientFilter:
             effects.append(effect.effect)
 
         return IngrListSerializer(data={'ingredients': ingrs, 'positive_effects': effects})
+
+
+class ProductComparison:
+    def __init__(self, to_compare: dict):
+        self.analysis1 = ProductAnalyzer(ToAnalyzeSerializer(data=to_compare['to_compare1']))
+        self.analysis1.get_data()
+        self.analysis1.get_effects()
+        self.analysis1.make_ingredients_serializers()
+
+        self.analysis2 = ProductAnalyzer(ToAnalyzeSerializer(data=to_compare['to_compare2']))
+        self.analysis2.get_data()
+        self.analysis2.get_effects()
+        self.analysis2.make_ingredients_serializers()
+
+        self.commons_serializer = None
+
+        self.shared_effects_serializers = []
+        self.shared_effects = []
+        self.inci_shared_effects1 = []
+        self.inci_shared_effects2 = []
+        self.unique_effects1 = []
+        self.inci_unique_effects1 = []
+        self.unique_effects2 = []
+        self.inci_unique_effects2 = []
+
+        self.shared_side_effects_serializers = []
+        self.shared_side_effects = []
+        self.inci_shared_side_effects1 = []
+        self.inci_shared_side_effects2 = []
+        self.unique_side_effects1 = []
+        self.inci_unique_side_effects1 = []
+        self.unique_side_effects2 = []
+        self.inci_unique_side_effects2 = []
+
+
+        self.unique_effects_serializers1 = []
+        self.unique_effects_serializers2 = []
+
+        self.unique_side_effects_serializers1 = []
+        self.unique_side_effects_serializers2 = []
+
+        self.shared_ingredients_serializers = []
+        self.unique_ingredients_serializers1 = []
+        self.unique_ingredients_serializers2 = []
+
+    def get_common_info(self):
+        self.analysis1.get_common_info()
+        self.analysis2.get_common_info()
+        self.commons_serializer = {
+            'vegan1': self.analysis1.commons_serializer.initial_data['vegan'],
+            'vegan2': self.analysis2.commons_serializer.initial_data['vegan'],
+            'natural1': self.analysis1.commons_serializer.initial_data['natural'],
+            'natural2': self.analysis2.commons_serializer.initial_data['natural'],
+            'pregnant1': self.analysis1.commons_serializer.initial_data['pregnant'],
+            'pregnant2': self.analysis2.commons_serializer.initial_data['pregnant'],
+            'hypoallergenic1': self.analysis1.commons_serializer.initial_data['hypoallergenic'],
+            'hypoallergenic2': self.analysis2.commons_serializer.initial_data['hypoallergenic']
+        }
+
+    def check_unique_effects(self, effects_list: List[Feature], inci_effects_list: List[List[Inci]], num: int, positive: bool):
+        for i in range(0, len(effects_list)):
+            if effects_list[i] in self.shared_effects or effects_list[i] in self.shared_side_effects:
+                pass
+            else:
+                if positive:
+                    if num == 1:
+                        self.unique_effects1.append(effects_list[i])
+                        self.inci_unique_effects1.append(inci_effects_list[i])
+                    else:
+                        self.unique_effects2.append(effects_list[i])
+                        self.inci_unique_effects2.append(inci_effects_list[i])
+                else:
+                    if num == 1:
+                        self.unique_side_effects1.append(effects_list[i])
+                        self.inci_unique_side_effects1.append(inci_effects_list[i])
+                    else:
+                        self.unique_side_effects2.append(effects_list[i])
+                        self.inci_unique_side_effects2.append(inci_effects_list[i])
+
+    def get_effects(self, effects_list1: List[Feature], effects_list2: List[Feature],
+                    inci_effects_list1: List[List[Inci]], inci_effects_list2: List[List[Inci]], positive: bool):
+        for i in range(0, len(effects_list1)):
+            for j in range(0, len(effects_list2)):
+                if effects_list1[i].effect == effects_list2[j].effect:
+                    if positive:
+                        self.shared_effects.append(effects_list1[i])
+                        self.inci_shared_effects1.append(inci_effects_list1[i])
+                        self.inci_shared_effects2.append(inci_effects_list2[j])
+                    else:
+                        self.shared_side_effects.append(effects_list1[i])
+                        self.inci_shared_side_effects1.append(inci_effects_list1[i])
+                        self.inci_shared_side_effects2.append(inci_effects_list2[j])
+        self.check_unique_effects(effects_list1, inci_effects_list1, 1, positive)
+        self.check_unique_effects(effects_list2, inci_effects_list2, 2, positive)
+
+
+    def make_shared_effects_serializers(self, positive: bool):
+        shared_effects = None
+        inci_shared_effects1 = None
+        inci_shared_effects2 = None
+        if positive:
+            shared_effects = self.shared_effects
+            inci_shared_effects1 = self.inci_shared_effects1
+            inci_shared_effects2 = self.inci_shared_effects2
+        else:
+            shared_effects = self.shared_side_effects
+            inci_shared_effects1 = self.inci_shared_side_effects1
+            inci_shared_effects2 = self.inci_shared_side_effects2
+
+        for i in range(0, len(shared_effects)):
+            names_list1 = []
+            names_list2 = []
+            effect = shared_effects[i]
+            inci_list1 = inci_shared_effects1[i]
+            inci_list2 = inci_shared_effects2[i]
+            inci_indices1 = [self.analysis1.incis.index(inci) for inci in inci_list1]
+            inci_indices2 = [self.analysis2.incis.index(inci) for inci in inci_list2]
+            max_conc1 = self.analysis1.concs[min(inci_indices1)]
+            max_conc2 = self.analysis2.concs[min(inci_indices2)]
+            for inci in inci_list1:
+                names_list1.append(self.analysis1.ingr_names[self.analysis1.incis.index(inci)])
+            for inci in inci_list2:
+                names_list2.append(self.analysis2.ingr_names[self.analysis2.incis.index(inci)])
+
+
+
+            if positive:
+                index_effect1 = CONCENTRATIONS.index(max_conc1)
+                index_effect2 = CONCENTRATIONS.index(max_conc2)
+
+                intensities = ['Сильное действие', 'Среднее действие', 'Слабое действие']
+                intensity1 = intensities[index_effect1]
+                intensity2 = intensities[index_effect2]
+
+                data = {
+                    'effect': effect.effect,
+                    'intensity1': intensity1,
+                    'intensity2': intensity2,
+                    'ingrs1': names_list1,
+                    'ingrs2': names_list2
+                }
+                self.shared_effects_serializers.append(data)
+            else:
+                data = {
+                    'side_effect': effect.effect,
+                    'ingrs1': names_list1,
+                    'ingrs2': names_list2
+                }
+                self.shared_side_effects_serializers.append(data)
+        return
+
+
+    def make_unique_effects_serializers(self, effects_list: List[Feature], inci_effects_list: List[List[Inci]],
+                                        analysis: ProductAnalyzer, num: int, positive: bool):
+        for i in range(0, len(effects_list)):
+            names_list = []
+            effect = effects_list[i]
+            inci_list = inci_effects_list[i]
+            inci_indices = [analysis.incis.index(inci) for inci in inci_list]
+            max_conc = analysis.concs[min(inci_indices)]
+            for inci in inci_list:
+                names_list.append(analysis.ingr_names[analysis.incis.index(inci)])
+
+            if positive:
+                index_effect = CONCENTRATIONS.index(max_conc)
+
+                intensities = ['Сильное действие', 'Среднее действие', 'Слабое действие']
+                intensity = intensities[index_effect]
+
+                data = {
+                    'effect': effect.effect,
+                    'intensity': intensity,
+                    'ingrs': names_list
+                }
+                if num == 1:
+                    self.unique_effects_serializers1.append(data)
+                else:
+                    self.unique_effects_serializers2.append(data)
+            else:
+                data = {
+                    'side_effect': effect.effect,
+                    'ingrs': names_list
+                }
+                if num == 1:
+                    self.unique_side_effects_serializers1.append(data)
+                else:
+                    self.unique_side_effects_serializers2.append(data)
+        return
+
+
+    def make_effects_serializers(self):
+        # +
+        self.get_effects(self.analysis1.effects_list, self.analysis2.effects_list,
+                         self.analysis1.inci_effects_list, self.analysis2.inci_effects_list, True)
+        # -
+        self.get_effects(self.analysis1.side_effects_list, self.analysis2.side_effects_list,
+                         self.analysis1.inci_side_effects_list, self.analysis2.inci_side_effects_list, False)
+        self.make_shared_effects_serializers(True)
+        self.make_shared_effects_serializers(False)
+        self.make_unique_effects_serializers(self.unique_effects1, self.inci_unique_effects1,
+                                             self.analysis1, 1, True)
+        self.make_unique_effects_serializers(self.unique_effects2, self.inci_unique_effects2,
+                                             self.analysis2, 2, True)
+        self.make_unique_effects_serializers(self.unique_side_effects1, self.inci_unique_side_effects1,
+                                             self.analysis1, 1, False)
+        self.make_unique_effects_serializers(self.unique_side_effects2, self.inci_unique_side_effects2,
+                                             self.analysis2, 2, False)
+
+    def check_unique_ingredients(self, ingr_list: List[dict], num: int):
+        present = [False for _ in ingr_list]
+        for i in range(0, len(ingr_list)):
+            ingr = ingr_list[i]
+            for j in range(0, len(self.shared_ingredients_serializers)):
+                present_ingr = self.shared_ingredients_serializers[j]
+                if ingr['ingr_name'] == present_ingr['ingr_name1'] or ingr['inci_name'] == present_ingr['inci_name']:
+                    present[i] = True
+        for i in range(0, len(ingr_list)):
+            if not present[i]:
+                ingr = ingr_list[i]
+                data = {
+                    'recognized': ingr['recognized'],
+                    'ingr_name': ingr['ingr_name'],
+                    'inci_name': ingr['inci_name'],
+                    'description': ingr['description']
+                }
+                if num == 1:
+                    self.unique_ingredients_serializers1.append(data)
+                else:
+                    self.unique_ingredients_serializers2.append(data)
+
+    def make_ingredients_serializers(self):
+        for i in range(0, len(self.analysis1.ingr_serializers)):
+            for j in range(0, len(self.analysis2.ingr_serializers)):
+                flag = False
+                ingr1 = self.analysis1.ingr_serializers[i]
+                ingr2 = self.analysis2.ingr_serializers[j]
+                data = {}
+                if ingr1['recognized'] and ingr2['recognized'] and ingr1['inci_name'] == ingr2['inci_name']:
+                    flag = True
+                    data = {
+                        'recognized': True,
+                        'ingr_name1': ingr1['ingr_name'],
+                        'ingr_name2': ingr2['ingr_name'],
+                        'inci_name': ingr1['inci_name'],
+                        'description': ingr1['description']
+                    }
+                elif not ingr1['recognized'] and not ingr2['recognized'] and ingr1['ingr_name'] == ingr2['ingr_name']:
+                    flag = True
+                    data = {
+                        'recognized': False,
+                        'ingr_name1': ingr1['ingr_name'],
+                        'ingr_name2': ingr2['ingr_name']
+                    }
+                if flag:
+                    self.shared_ingredients_serializers.append(data)
+
+        self.check_unique_ingredients(self.analysis1.ingr_serializers, 1)
+        self.check_unique_ingredients(self.analysis2.ingr_serializers, 2)
+
+    def get_result(self):
+        self.get_common_info()
+        # print(self.commons_serializer)
+        self.make_effects_serializers()
+        self.make_ingredients_serializers()
+        data = {
+            'data': self.commons_serializer,
+            'shared_effects': self.shared_effects_serializers,
+            'unique_effects1': self.unique_effects_serializers1,
+            'unique_effects2': self.unique_effects_serializers2,
+            'shared_side_effects': self.shared_side_effects_serializers,
+            'unique_side_effects1': self.unique_side_effects_serializers1,
+            'unique_side_effects2': self.unique_side_effects_serializers2,
+            'shared_ingredients': self.shared_ingredients_serializers,
+            'unique_ingredients1': self.unique_ingredients_serializers1,
+            'unique_ingredients2': self.unique_ingredients_serializers2
+        }
+        return ComparedSerializer(data=data)
+
 
 
 

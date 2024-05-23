@@ -144,4 +144,35 @@ class IngredientSearch(GenericAPIView):
 #         return Response(ingr_list.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+class Compare(GenericAPIView):
+    serializer_class = ToCompareSerializer
+    renderer_classes = [JSONRenderer]
 
+    def post(self, request: Request) -> Response:
+        """ Создать записи для сравнения """
+        serializer = ToCompareSerializer(data=request.data)
+        if serializer.is_valid():
+            if request.user.is_authenticated:
+                res = service.post_two_records(serializer.validated_data, request.user)
+                # return Response(res, status=status.HTTP_200_OK)
+            else:
+                res = service.post_two_records(serializer.validated_data)
+                # return Response(res, status=status.HTTP_200_OK)
+            new_url = 'get_comparison/' + str(res[0]) + '/' + str(res[1])
+            return redirect(new_url)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class GetComparison(GenericAPIView):
+    serializer_class = ComparedSerializer
+    renderer_classes = [JSONRenderer]
+
+    def get(self, request: Request, record_id1: int, record_id2: int) -> Response:
+        """ Создать запись для анализа """
+        compared = service.get_comparison_by_record_ids(record_id1, record_id2)
+        if not request.user.is_authenticated:
+            service.delete_record_by_id(record_id1)
+            service.delete_record_by_id(record_id2)
+        if compared.is_valid():
+            return Response(compared.data, status=status.HTTP_200_OK)
+        return Response(compared.errors, status=status.HTTP_400_BAD_REQUEST)

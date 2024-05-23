@@ -1,7 +1,7 @@
 from ..serializers import *
 # from ..models import *
 from .repository_service import *
-from .product_analyzer import ProductAnalyzer, IngredientInfo, IngredientFilter
+from .product_analyzer import ProductAnalyzer, IngredientInfo, IngredientFilter, ProductComparison
 
 
 class VKRService:
@@ -22,6 +22,22 @@ class VKRService:
             'ingrs': to_analyze,
         }
         return ToAnalyzeSerializer(data=data)
+
+    def make_to_compare(self, record_id1, record_id2):
+        to_compare1 = None
+        to_compare2 = None
+        to_analyze1 = self.make_to_analyze(record_id1)
+        if to_analyze1.is_valid():
+            to_compare1 = to_analyze1.data
+        to_analyze2 = self.make_to_analyze(record_id2)
+        if to_analyze2.is_valid():
+            to_compare2 = to_analyze2.data
+        data = {
+            'to_compare1': to_compare1,
+            'to_compare2': to_compare2
+        }
+        return data
+
 
     def post_record(self, to_analyze: ToAnalyzeSerializer, user: User = None) -> int:
         ingr_list = ''
@@ -91,5 +107,15 @@ class VKRService:
     def ingredient_search(self) -> IngrListSerializer:
         ingr_filter = IngredientFilter()
         return ingr_filter.get_list()
+
+    def post_two_records(self, to_compare: ToCompareSerializer, user: User = None) -> (int, int):
+        record_id1 = self.post_record(to_compare['to_compare1'], user)
+        record_id2 = self.post_record(to_compare['to_compare2'], user)
+        return record_id1, record_id2
+
+    def get_comparison_by_record_ids(self, record_id1: int, record_id2: int) -> ComparedSerializer:
+        to_compare = self.make_to_compare(record_id1, record_id2)
+        comparison = ProductComparison(to_compare)
+        return comparison.get_result()
 
 

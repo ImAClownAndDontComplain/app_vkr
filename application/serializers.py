@@ -115,6 +115,70 @@ class IngrListSerializer(serializers.Serializer):
     ingredients = serializers.ListField(child=IngrNamesSerializer())
     positive_effects = serializers.ListField(child=serializers.CharField(max_length=100))
 
+class CommonCompareSerializer(serializers.Serializer):
+    vegan1 = serializers.CharField(max_length=300, required=True)
+    vegan2 = serializers.CharField(max_length=300, required=True)
+    natural1 = serializers.CharField(max_length=300, required=True)
+    natural2 = serializers.CharField(max_length=300, required=True)
+    pregnant1 = serializers.CharField(max_length=300, required=True)
+    pregnant2 = serializers.CharField(max_length=300, required=True)
+    hypoallergenic1 = serializers.CharField(max_length=300, required=True)
+    hypoallergenic2 = serializers.CharField(max_length=300, required=True)
+
+class SharedEffectSerializer(serializers.Serializer):
+    effect = serializers.CharField(max_length=300, required=False)
+    intensity1 = serializers.CharField(max_length=300, required=False)
+    ingrs1 = ListField(child=serializers.CharField(max_length=100))
+    intensity2 = serializers.CharField(max_length=300, required=False)
+    ingrs2 = ListField(child=serializers.CharField(max_length=100))
+
+class SharedSideEffectSerializer(serializers.Serializer):
+    side_effect = serializers.CharField(max_length=300, required=False)
+    ingrs1 = ListField(child=serializers.CharField(max_length=100))
+    ingrs2 = ListField(child=serializers.CharField(max_length=100))
+
+class UniqueEffectSerializer(serializers.Serializer):
+    effect = serializers.CharField(max_length=300, required=False)
+    intensity = serializers.CharField(max_length=300, required=False)
+    ingrs = ListField(child=serializers.CharField(max_length=100))
+
+class UniqueSideEffectSerializer(serializers.Serializer):
+    side_effect = serializers.CharField(max_length=300, required=False)
+    ingrs = ListField(child=serializers.CharField(max_length=100))
+
+class SharedIngredientsSerializer(serializers.Serializer):
+    recognized = serializers.BooleanField(required=True)
+    ingr_name1 = serializers.CharField(max_length=100, required=False)
+    ingr_name2 = serializers.CharField(max_length=100, required=False)
+    inci_name = serializers.CharField(max_length=100, required=False)
+    description = serializers.CharField(max_length=200, required=False)
+    # type_name = serializers.CharField(max_length=100, required=False)
+    # effect = serializers.CharField(max_length=200, required=False)
+
+class ToCompareSerializer(serializers.Serializer):
+    to_compare1 = ToAnalyzeSerializer(required=False)
+    to_compare2 = ToAnalyzeSerializer(required=False)
+
+class IngrCompareSerializerShort(serializers.Serializer):
+    recognized = serializers.BooleanField(required=True)
+    ingr_name = serializers.CharField(max_length=100, required=True)
+    inci_name = serializers.CharField(max_length=100, required=False)
+    description = serializers.CharField(max_length=200, required=False)
+
+class ComparedSerializer(serializers.Serializer):
+    data = CommonCompareSerializer()
+    shared_effects = serializers.ListField(child=SharedEffectSerializer())
+    unique_effects1 = serializers.ListField(child=UniqueEffectSerializer())
+    unique_effects2 = serializers.ListField(child=UniqueEffectSerializer())
+
+    shared_side_effects = serializers.ListField(child=SharedSideEffectSerializer())
+    unique_side_effects1 = serializers.ListField(child=UniqueSideEffectSerializer())
+    unique_side_effects2 = serializers.ListField(child=UniqueSideEffectSerializer())
+
+    shared_ingredients = serializers.ListField(child=SharedIngredientsSerializer(), required=False)
+    unique_ingredients1 = serializers.ListField(child=IngrCompareSerializerShort(), required=False)
+    unique_ingredients2 = serializers.ListField(child=IngrCompareSerializerShort(), required=False)
+
 # class IngrSearchSerializer(serializers.Serializer):
 #     ingr_name = serializers.CharField(max_length=100, required=False)
 #     ingr_effect = serializers.CharField(max_length=100, required=False)
