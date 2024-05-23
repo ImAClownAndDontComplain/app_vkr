@@ -265,6 +265,16 @@ def get_favorites_by_user_id(id: int) -> List[Record]:
     return Record.objects.filter(user_id=id, favorite=True).all()
 
 
+def change_record_status(id: int) -> None:
+    record = Record.objects.get(id=id)
+    if record.favorite:
+        record.favorite = False
+    else:
+        record.favorite = True
+    record.save()
+    return
+
+
 def add_record(id: int, ingr_list: str, conc_list: str, date_time: datetime) -> None:
     user = get_user_by_id(id)
     record = Record.objects.create(User=user, ingr_list=ingr_list, conc_list=conc_list, datetime=date_time)

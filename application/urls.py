@@ -11,6 +11,7 @@ urlpatterns = [
   path('compare/get_comparison/<int:record_id1>/<int:record_id2>', views.GetComparison.as_view(), name='get_comparison'),
   path('profile/<str:option>', views.get_records, name='profile'),
   path('ingredient_search/<str:ingr_name>', views.get_ingredient_info, name='ingredient_info'),
-  path('ingredient_search/', views.IngredientSearch.as_view(), name='ingredient_search')
+  path('ingredient_search/', views.IngredientSearch.as_view(), name='ingredient_search'),
+  path('profile/<str:option>/<int:record_id>', views.change_record_status, name='change_record_status'),
 ]
 # <str:ingr_name>,<str:effect>

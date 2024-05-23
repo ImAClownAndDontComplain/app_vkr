@@ -106,6 +106,13 @@ class GetAnalysis(GenericAPIView):
 
 @permission_classes([IsAuthenticated])
 @api_view(['GET'])
+def change_record_status(request: Request, option: str, record_id: int) -> Response:
+    service.change_record_status(record_id)
+    return redirect('http://127.0.01:8000/profile/' + option)
+
+
+@permission_classes([IsAuthenticated])
+@api_view(['GET'])
 def get_records(request: Request, option) -> Response:
     user_id = request.user.id
     all_records = service.get_records(user_id, option)

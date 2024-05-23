@@ -672,6 +672,8 @@ class IngredientFilter:
         return IngrListSerializer(data={'ingredients': ingrs, 'positive_effects': effects})
 
 
+
+
 class ProductComparison:
     def __init__(self, to_compare: dict):
         self.analysis1 = ProductAnalyzer(ToAnalyzeSerializer(data=to_compare['to_compare1']))
@@ -947,7 +949,3 @@ class ProductComparison:
             'unique_ingredients2': self.unique_ingredients_serializers2
         }
         return ComparedSerializer(data=data)
-
-
-
-

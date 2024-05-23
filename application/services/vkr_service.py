@@ -118,4 +118,9 @@ class VKRService:
         comparison = ProductComparison(to_compare)
         return comparison.get_result()
 
+    def change_record_status(self, record_id: int):
+        change_record_status(record_id)
+        return
+
+
 
