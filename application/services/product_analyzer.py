@@ -891,12 +891,19 @@ class ProductComparison:
         for i in range(0, len(ingr_list)):
             if not present[i]:
                 ingr = ingr_list[i]
-                data = {
-                    'recognized': ingr['recognized'],
-                    'ingr_name': ingr['ingr_name'],
-                    'inci_name': ingr['inci_name'],
-                    'description': ingr['description']
-                }
+                data = {}
+                if get_inci_by_ingredient_name(ingr['ingr_name']) is None:
+                    data = {
+                        'recognized': ingr['recognized'],
+                        'ingr_name': ingr['ingr_name']
+                    }
+                else:
+                    data = {
+                        'recognized': ingr['recognized'],
+                        'ingr_name': ingr['ingr_name'],
+                        'inci_name': ingr['inci_name'],
+                        'description': ingr['description']
+                    }
                 if num == 1:
                     self.unique_ingredients_serializers1.append(data)
                 else:
