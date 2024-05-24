@@ -159,6 +159,10 @@ class ToCompareSerializer(serializers.Serializer):
     to_compare1 = ToAnalyzeSerializer(required=False)
     to_compare2 = ToAnalyzeSerializer(required=False)
 
+class ComparedRecognizedSerializer(serializers.Serializer):
+    ingr_name = serializers.CharField(max_length=100, required=False)
+    recognized = serializers.BooleanField()
+
 class IngrCompareSerializerShort(serializers.Serializer):
     recognized = serializers.BooleanField(required=True)
     ingr_name = serializers.CharField(max_length=100, required=True)
@@ -166,6 +170,8 @@ class IngrCompareSerializerShort(serializers.Serializer):
     description = serializers.CharField(max_length=200, required=False)
 
 class ComparedSerializer(serializers.Serializer):
+    ingrs1 = serializers.ListField(child=ComparedRecognizedSerializer())
+    ingrs2 = serializers.ListField(child=ComparedRecognizedSerializer())
     data = CommonCompareSerializer()
     shared_effects = serializers.ListField(child=SharedEffectSerializer())
     unique_effects1 = serializers.ListField(child=UniqueEffectSerializer())

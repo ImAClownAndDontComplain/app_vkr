@@ -717,6 +717,9 @@ class ProductComparison:
         self.unique_ingredients_serializers1 = []
         self.unique_ingredients_serializers2 = []
 
+        self.ingrs1 = []
+        self.ingrs2 = []
+
     def get_common_info(self):
         self.analysis1.get_common_info()
         self.analysis2.get_common_info()
@@ -911,6 +914,18 @@ class ProductComparison:
 
     def make_ingredients_serializers(self):
         for i in range(0, len(self.analysis1.ingr_serializers)):
+            data = {
+                'ingr_name': self.analysis1.ingr_serializers[i]['ingr_name'],
+                'recognized': self.analysis1.ingr_serializers[i]['recognized']
+            }
+            self.ingrs1.append(data)
+        for i in range(0, len(self.analysis2.ingr_serializers)):
+            data = {
+                'ingr_name': self.analysis2.ingr_serializers[i]['ingr_name'],
+                'recognized': self.analysis2.ingr_serializers[i]['recognized']
+            }
+            self.ingrs2.append(data)
+        for i in range(0, len(self.analysis1.ingr_serializers)):
             for j in range(0, len(self.analysis2.ingr_serializers)):
                 flag = False
                 ingr1 = self.analysis1.ingr_serializers[i]
@@ -944,6 +959,8 @@ class ProductComparison:
         self.make_effects_serializers()
         self.make_ingredients_serializers()
         data = {
+            'ingrs1': self.ingrs1,
+            'ingrs2': self.ingrs2,
             'data': self.commons_serializer,
             'shared_effects': self.shared_effects_serializers,
             'unique_effects1': self.unique_effects_serializers1,
