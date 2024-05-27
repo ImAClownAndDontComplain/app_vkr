@@ -59,6 +59,7 @@ class VKRService:
 
     def delete_record_by_id(self, record_id) -> None:
         delete_record_by_id(record_id)
+        return
 
     def get_all_ingr_names(self) -> AllNamesSerializer:
         all_ingr_names = get_all_ingredient_names()

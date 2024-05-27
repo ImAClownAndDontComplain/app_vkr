@@ -351,6 +351,9 @@ def delete_favorites(id: int) -> None:
 def filter_ingredients(ingr_name: str, ingr_effect: str) -> list:
     pass
 
+def get_skin_types() -> List[SkinTypes]:
+    return list(SkinTypes.objects.all())
+
 
 
 

@@ -172,3 +172,17 @@ class TempRecord(Model):
     def __str__(self):
         return str({'ingredient list': self.ingr_list,
                     'concentration list': self.conc_list})
+
+class SkinTypes(Model):
+    id_line = AutoField(primary_key=True)
+    ingredients = TextField('Ingredient list')
+    combination = IntegerField('Combination', null=True, unique=False)
+    dry = IntegerField('Dry', null=True, unique=False)
+    normal = IntegerField('Normal', null=True, unique=False)
+    oily = IntegerField('Oily', null=True, unique=False)
+    sensitive = IntegerField('Sensitive', null=True, unique=False)
+
+    class Meta:
+        db_table = 'skin_types'
+
+

@@ -36,9 +36,9 @@ def home(request):
 #     return data
 
 # @permission_classes([IsAuthenticated])
-@api_view(['GET'])
-def get_username(request) -> HttpResponse:
-    return HttpResponse(request.user.is_authenticated)
+# @api_view(['GET'])
+# def get_username(request) -> HttpResponse:
+#     return HttpResponse(request.user.is_authenticated)
 
 @api_view(['GET'])
 def get_all_ingr_names(request) -> Response:
@@ -104,11 +104,31 @@ class GetAnalysis(GenericAPIView):
         return Response(analyzed.data, status=status.HTTP_200_OK)
         # return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+class PutDelRecord(GenericAPIView):
+    serializer_class = RecordSerializer
+    permission_classes = [IsAuthenticated]
+    renderer_classes = [JSONRenderer]
+
+    def delete(self, request: Request, option: str, record_id: int) -> Response:
+        service.delete_record_by_id(record_id)
+        return Response(status=status.HTTP_200_OK)
+
+    def put(self, request: Request, option: str, record_id: int) -> Response:
+        service.change_record_status(record_id)
+        return Response(status=status.HTTP_200_OK)
+
 @permission_classes([IsAuthenticated])
-@api_view(['GET'])
+@api_view(['DELETE'])
+def delete_record(request: Request, option: str, record_id: int) -> Response:
+    service.delete_record_by_id(record_id)
+    return Response(status=status.HTTP_200_OK)
+
+@permission_classes([IsAuthenticated])
+@api_view(['PUT'])
 def change_record_status(request: Request, option: str, record_id: int) -> Response:
     service.change_record_status(record_id)
-    return redirect('http://127.0.01:8000/profile/' + option)
+    return Response(status=status.HTTP_200_OK)
+    # return redirect('http://127.0.01:8000/profile/' + option)
 
 
 @permission_classes([IsAuthenticated])
