@@ -35,10 +35,10 @@ def home(request):
 #     }
 #     return data
 
-# @permission_classes([IsAuthenticated])
-# @api_view(['GET'])
-# def get_username(request) -> HttpResponse:
-#     return HttpResponse(request.user.is_authenticated)
+@permission_classes([IsAuthenticated])
+@api_view(['GET'])
+def get_email(request) -> Response:
+    return Response(request.user.email, status=status.HTTP_200_OK)
 
 @api_view(['GET'])
 def get_all_ingr_names(request) -> Response:
@@ -109,6 +109,9 @@ class PutDelRecord(GenericAPIView):
     permission_classes = [IsAuthenticated]
     renderer_classes = [JSONRenderer]
 
+    # def get(self, request: Request, record_id: int) -> Response:
+    #     return redirect('http://127.0.0.1:8000/analyze/get_analysis/' + str(record_id))
+
     def delete(self, request: Request, option: str, record_id: int) -> Response:
         service.delete_record_by_id(record_id)
         return Response(status=status.HTTP_200_OK)
@@ -117,17 +120,17 @@ class PutDelRecord(GenericAPIView):
         service.change_record_status(record_id)
         return Response(status=status.HTTP_200_OK)
 
-@permission_classes([IsAuthenticated])
-@api_view(['DELETE'])
-def delete_record(request: Request, option: str, record_id: int) -> Response:
-    service.delete_record_by_id(record_id)
-    return Response(status=status.HTTP_200_OK)
-
-@permission_classes([IsAuthenticated])
-@api_view(['PUT'])
-def change_record_status(request: Request, option: str, record_id: int) -> Response:
-    service.change_record_status(record_id)
-    return Response(status=status.HTTP_200_OK)
+# @permission_classes([IsAuthenticated])
+# @api_view(['DELETE'])
+# def delete_record(request: Request, option: str, record_id: int) -> Response:
+#     service.delete_record_by_id(record_id)
+#     return Response(status=status.HTTP_200_OK)
+#
+# @permission_classes([IsAuthenticated])
+# @api_view(['PUT'])
+# def change_record_status(request: Request, option: str, record_id: int) -> Response:
+#     service.change_record_status(record_id)
+#     return Response(status=status.HTTP_200_OK)
     # return redirect('http://127.0.01:8000/profile/' + option)
 
 
