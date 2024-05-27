@@ -38,7 +38,7 @@ def home(request):
 @permission_classes([IsAuthenticated])
 @api_view(['GET'])
 def get_email(request) -> Response:
-    return Response(request.user.email, status=status.HTTP_200_OK)
+    return Response(data={'email': request.user.email}, status=status.HTTP_200_OK)
 
 @api_view(['GET'])
 def get_all_ingr_names(request) -> Response:
