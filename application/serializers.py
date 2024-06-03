@@ -17,7 +17,7 @@ class AllNamesSerializer(serializers.Serializer):
 
 class IngrSerializer(serializers.Serializer):
     ingr_name = serializers.CharField(max_length=100, required=True)
-    concentration = serializers.CharField(max_length=10, required=False)
+    concentration = serializers.CharField(max_length=10, required=False, default='0')
 
 class ToAnalyzeSerializer(serializers.Serializer):
     ingrs = serializers.ListField(child=IngrSerializer())

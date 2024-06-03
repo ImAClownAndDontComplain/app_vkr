@@ -128,22 +128,27 @@ class ProductAnalyzer:
                 self.incis.append(None)
 
     # проверка дублирования эффектов (если два компонента имеют один эффект, они относятся к одному эффекту)
-    def check_effect_duplicating(self, feature: Feature, inci: Inci) -> bool:
-        for i in range(0, len(self.effects_list)):
-            effect = self.effects_list[i]
+    def check_effect_duplicating(self, feature_list: List[Feature], inci_feature_list: List[List[Inci]], feature: Feature, inci: Inci) -> bool:
+        for i in range(0, len(feature_list)):
+            effect = feature_list[i]
             if effect.id == feature.id:
-                self.inci_effects_list[i].append(inci)
+                inci_feature_list[i].append(inci)
                 return True
+        # for i in range(0, len(self.effects_list)):
+        #     effect = self.effects_list[i]
+        #     if effect.id == feature.id:
+        #         self.inci_effects_list[i].append(inci)
+        #         return True
         return False
 
     # проверка дублирования побочек (тот же принцип)
-    def check_side_effect_duplicating(self, feature: Feature, inci: Inci) -> bool:
-        for i in range(0, len(self.side_effects_list)):
-            side_effect = self.side_effects_list[i]
-            if side_effect.id == feature.id:
-                self.inci_side_effects_list[i].append(inci)
-                return True
-        return False
+    # def check_side_effect_duplicating(self, feature: Feature, inci: Inci) -> bool:
+    #     for i in range(0, len(self.side_effects_list)):
+    #         side_effect = self.side_effects_list[i]
+    #         if side_effect.id == feature.id:
+    #             self.inci_side_effects_list[i].append(inci)
+    #             return True
+    #     return False
 
     # проверка дублирования рекомендаций при добавлении
     def check_recoms_duplicating(self, recom: Recommendation) -> bool:
@@ -230,12 +235,15 @@ class ProductAnalyzer:
                 if features is not None:
                     for feature in features:
                         if feature.benefit is True:
-                            add_new_effect = self.check_effect_duplicating(feature, inci)
+                            add_new_effect = self.check_effect_duplicating(self.effects_list, self.inci_effects_list,
+                                                                           feature, inci)
                             if not add_new_effect:
                                 self.effects_list.append(feature)
                                 self.inci_effects_list.append([inci])
                         else:
-                            add_new_side_effect = self.check_side_effect_duplicating(feature, inci)
+                            add_new_side_effect = self.check_effect_duplicating(self.side_effects_list,
+                                                                                self.inci_side_effects_list,
+                                                                                feature, inci)
                             if not add_new_side_effect:
                                 self.side_effects_list.append(feature)
                                 self.inci_side_effects_list.append([inci])
@@ -889,7 +897,8 @@ class ProductComparison:
             ingr = ingr_list[i]
             for j in range(0, len(self.shared_ingredients_serializers)):
                 present_ingr = self.shared_ingredients_serializers[j]
-                if ingr['ingr_name'] == present_ingr['ingr_name1'] or ingr['inci_name'] == present_ingr['inci_name']:
+                if ingr['ingr_name'] == present_ingr['ingr_name1'] or (ingr['recognized'] and present_ingr['recognized']
+                                                                and ingr['inci_name'] == present_ingr['inci_name']):
                     present[i] = True
         for i in range(0, len(ingr_list)):
             if not present[i]:
